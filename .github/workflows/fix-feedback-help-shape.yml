@@ -22,20 +22,26 @@ jobs:
           def get(params):
               q=urllib.parse.urlencode(dict(params,callback='x'))
               txt=urllib.request.urlopen(base+'?'+q,timeout=20).read().decode().strip()
-              if txt.startswith('x(') and txt.endswith(')'):
-                  txt=txt[2:-1]
-              try:return json.loads(txt)
-              except Exception:return {'raw':txt[:3000]}
+              if txt.startswith('x('):
+                  txt=txt[2:]
+                  if txt.endswith(';'): txt=txt[:-1]
+                  if txt.endswith(')'): txt=txt[:-1]
+              return json.loads(txt)
           for api in ['feedbackOptions','feedbackSchema','feedbackConfig','feedbackHelpOptions']:
               try: print('ROUTE',api,json.dumps(get({'api':api}),ensure_ascii=False)[:5000])
               except Exception as e: print('ROUTE',api,'ERR',repr(e))
           try:
               d=get({'api':'data','date':'2026-08-31'})
-              print('DATA_TOP_KEYS',sorted((d.get('data') if isinstance(d,dict) and isinstance(d.get('data'),dict) else d).keys()))
               obj=d.get('data',d) if isinstance(d,dict) else {}
+              print('DATA_TOP_KEYS',sorted(obj.keys()))
               for k,v in obj.items():
                   if 'feedback' in k.lower() or 'option' in k.lower() or 'help' in k.lower():
                       print('DATA_FEEDBACK_KEY',k,json.dumps(v,ensure_ascii=False)[:5000])
               arr=obj.get('assignments') or []
-              if arr: print('ASSIGNMENT_KEYS',sorted(arr[0].keys()))
+              if arr:
+                  print('ASSIGNMENT_KEYS',sorted(arr[0].keys()))
+                  for a in arr:
+                      for k,v in a.items():
+                          if 'feedback' in k.lower() or 'option' in k.lower() or 'help' in k.lower():
+                              print('ASSIGNMENT_FEEDBACK_KEY',a.get('row'),k,json.dumps(v,ensure_ascii=False)[:2000])
           except Exception as e: print('DATA_ERR',repr(e))
