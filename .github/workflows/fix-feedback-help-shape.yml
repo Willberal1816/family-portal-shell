@@ -1,13 +1,62 @@
-name: Retired feedback help patch helper
+name: Repair student feedback contract alignment
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-feedback-help-shape.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  retired:
+  patch:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Feedback backend schema probe is retired."
+      - uses: actions/checkout@v4
+      - name: Align feedback form with backend contract
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          replacements=[
+            ("feedbackFix('Need more examples','I needed more examples')", "feedbackFix('I needed more examples','I needed more examples')"),
+            ("feedbackFix('Work was not taught','The work was not taught first')", "feedbackFix('The work asked something the lesson did not teach','The work was not taught first')"),
+            ("feedbackFix('Work was too easy','The work was too easy')", "feedbackFix('The work was too easy','The work was too easy')"),
+            ("feedbackFix('Work was too repetitive','The work was too repetitive')", "feedbackFix('The work was too repetitive','The work was too repetitive')"),
+          ]
+          for old,new in replacements:
+              if old not in s: raise SystemExit('Missing expected fix-choice pattern: '+old)
+              s=s.replace(old,new,1)
+
+          old_q4="h+='<div class=\"lesson-step\"><h3>4. What would help next time?</h3><textarea id=\"feedbackHelp\" rows=\"3\" style=\"font:inherit;font-size:16px;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px\" placeholder=\"Tell us what would make the next lesson better.\"></textarea></div>';"
+          new_q4="h+='<div class=\"lesson-step\"><h3>4. What would help next time?</h3><div class=\"muted\">Choose the one that would help most.</div>'+feedbackRadio('feedbackHelp','More explanation','More explanation')+feedbackRadio('feedbackHelp','More examples','More examples')+feedbackRadio('feedbackHelp','One worked example','One worked example')+feedbackRadio('feedbackHelp','A video or visual','A video or visual')+feedbackRadio('feedbackHelp','Practice together first','Practice together first')+feedbackRadio('feedbackHelp','Clearer directions','Clearer directions')+feedbackRadio('feedbackHelp','Fewer questions','Fewer questions')+feedbackRadio('feedbackHelp','Harder questions','Harder questions')+feedbackRadio('feedbackHelp','Nothing — this worked well','Nothing — this worked well')+'</div>';"
+          if old_q4 not in s: raise SystemExit('Missing expected Q4 textarea pattern')
+          s=s.replace(old_q4,new_q4,1)
+
+          old_submit="function submitClassFeedback(btn){if(!active)return;var d=document.querySelector('input[name=\"feedbackDifficulty\"]:checked'),t=document.querySelector('input[name=\"feedbackTeaching\"]:checked'),fixes=Array.from(document.querySelectorAll('input[name=\"feedbackFix\"]:checked')).map(function(x){return x.value}),help=(document.getElementById('feedbackHelp')||{}).value||'',note=(document.getElementById('feedbackNote')||{}).value||'',err=document.getElementById('feedbackError');\n if(!d||!t||!fixes.length||!help.trim()){if(err)err.innerHTML='<div class=\"card error\"><b>Please finish the four required questions.</b></div>';return}\n if(btn){btn.disabled=true;btn.textContent='Saving…'}var fixValue=\"array\"==='array'?fixes:fixes.join(', '),payload={difficulty:d.value,teachingEnough:t.value,whatToFix:fixValue,whatWouldHelp:[help.trim()],studentNote:note.trim()};"
+          new_submit="function submitClassFeedback(btn){if(!active)return;var d=document.querySelector('input[name=\"feedbackDifficulty\"]:checked'),t=document.querySelector('input[name=\"feedbackTeaching\"]:checked'),fixes=Array.from(document.querySelectorAll('input[name=\"feedbackFix\"]:checked')).map(function(x){return x.value}),help=document.querySelector('input[name=\"feedbackHelp\"]:checked'),note=(document.getElementById('feedbackNote')||{}).value||'',err=document.getElementById('feedbackError');\n if(!d||!t||!fixes.length||!help){if(err)err.innerHTML='<div class=\"card error\"><b>Please finish the four required questions.</b></div>';return}\n if(btn){btn.disabled=true;btn.textContent='Saving…'}var fixValue=\"array\"==='array'?fixes:fixes.join(', '),payload={difficulty:d.value,teachingEnough:t.value,whatToFix:fixValue,whatWouldHelp:help.value,note:note.trim()};"
+          if old_submit not in s: raise SystemExit('Missing expected submit payload pattern')
+          s=s.replace(old_submit,new_submit,1)
+
+          checks=[
+            "feedbackRadio('feedbackHelp','More explanation','More explanation')",
+            "feedbackRadio('feedbackHelp','Nothing — this worked well','Nothing — this worked well')",
+            "whatWouldHelp:help.value,note:note.trim()",
+            "feedbackFix('I needed more examples','I needed more examples')",
+            "feedbackFix('The work asked something the lesson did not teach','The work was not taught first')",
+          ]
+          for x in checks:
+              if x not in s: raise SystemExit('Validation failed: '+x)
+          if "whatWouldHelp:[help.trim()]" in s or "studentNote:note.trim()" in s:
+              raise SystemExit('Legacy feedback payload remains')
+          p.write_text(s,encoding='utf-8')
+      - name: Commit repair
+        run: |
+          git config user.name 'Willberal1816'
+          git config user.email '204775082+Willberal1816@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Align student feedback form with backend contract'
+          git push
