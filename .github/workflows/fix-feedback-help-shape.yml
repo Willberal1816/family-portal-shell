@@ -1,47 +1,13 @@
-name: Inspect feedback backend schema
+name: Retired feedback help patch helper
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/fix-feedback-help-shape.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  inspect:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - name: Read-only feedback schema inspection
-        shell: python
-        run: |
-          import base64, json, urllib.parse, urllib.request
-          token='aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ZTFnRjdFUXpSeV9ndTBUZkhJMkFGZnZMQWFsT21jSW11OEx2N21KLWxHN2dpYjFEV1VMRmt2ajVKOFhIaW9SS0JaZy9leGVj'
-          base=base64.b64decode(token+'='*((4-len(token)%4)%4)).decode()
-          def get(params):
-              q=urllib.parse.urlencode(dict(params,callback='x'))
-              txt=urllib.request.urlopen(base+'?'+q,timeout=20).read().decode().strip()
-              if txt.startswith('x('):
-                  txt=txt[2:]
-                  if txt.endswith(';'): txt=txt[:-1]
-                  if txt.endswith(')'): txt=txt[:-1]
-              return json.loads(txt)
-          for api in ['feedbackOptions','feedbackSchema','feedbackConfig','feedbackHelpOptions']:
-              try: print('ROUTE',api,json.dumps(get({'api':api}),ensure_ascii=False)[:5000])
-              except Exception as e: print('ROUTE',api,'ERR',repr(e))
-          try:
-              d=get({'api':'data','date':'2026-08-31'})
-              obj=d.get('data',d) if isinstance(d,dict) else {}
-              print('DATA_TOP_KEYS',sorted(obj.keys()))
-              for k,v in obj.items():
-                  if 'feedback' in k.lower() or 'option' in k.lower() or 'help' in k.lower():
-                      print('DATA_FEEDBACK_KEY',k,json.dumps(v,ensure_ascii=False)[:5000])
-              arr=obj.get('assignments') or []
-              if arr:
-                  print('ASSIGNMENT_KEYS',sorted(arr[0].keys()))
-                  for a in arr:
-                      for k,v in a.items():
-                          if 'feedback' in k.lower() or 'option' in k.lower() or 'help' in k.lower():
-                              print('ASSIGNMENT_FEEDBACK_KEY',a.get('row'),k,json.dumps(v,ensure_ascii=False)[:2000])
-          except Exception as e: print('DATA_ERR',repr(e))
+      - run: echo "Feedback backend schema probe is retired."
