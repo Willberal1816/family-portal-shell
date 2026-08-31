@@ -1,102 +1,13 @@
-name: Patch student lesson feedback
+name: Retired student feedback patch helper
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/patch-student-feedback.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Patch and validate feedback flow
-        env:
-          NATALIE_BACKEND: https://script.google.com/macros/s/AKfycbxe1gF7EQzRy_gu0TfHI2AFfvLAalOmcImu8Lv7mJ-lG7gib1DWULFkvj5J8XHioRKBZg/exec
-          PATCH_B64: Ly8gU3R1ZGVudCBMZXNzb24gRmVlZGJhY2sgZmxvdyDigJQgY29tcGxldGVkIGNsYXNzZXMgcmVtYWluIG9wZW4gdW50aWwgc3R1ZGVudCBmZWVkYmFjayBpcyBzYXZlZC4KZnVuY3Rpb24gZmVlZGJhY2tEb25lKGEpe3ZhciB2PWEmJmEuc3R1ZGVudEZlZWRiYWNrU3VibWl0dGVkO3JldHVybiB2PT09dHJ1ZXx8U3RyaW5nKHZ8fCcnKS50b0xvd2VyQ2FzZSgpPT09J3RydWUnfHxTdHJpbmcodnx8JycpLnRvTG93ZXJDYXNlKCk9PT0neWVzJ30KZnVuY3Rpb24gb3BlbkNsYXNzRmVlZGJhY2socm93KXt2YXIgYT1maW5kQXNzaWdubWVudChyb3cpO2lmKGEpc2hvd0NsYXNzRmVlZGJhY2soYSl9CmZ1bmN0aW9uIGZlZWRiYWNrUmFkaW8obmFtZSx2YWx1ZSxsYWJlbCl7cmV0dXJuICc8bGFiZWwgc3R5bGU9ImRpc3BsYXk6YmxvY2s7bWFyZ2luOjlweCAwIj48aW5wdXQgdHlwZT0icmFkaW8iIG5hbWU9IicrbmFtZSsnIiB2YWx1ZT0iJytlc2ModmFsdWUpKyciPiAnK2VzYyhsYWJlbCkrJzwvbGFiZWw+J30KZnVuY3Rpb24gZmVlZGJhY2tGaXgodmFsdWUsbGFiZWwpe3JldHVybiAnPGxhYmVsIHN0eWxlPSJkaXNwbGF5OmJsb2NrO21hcmdpbjo5cHggMCI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiBuYW1lPSJmZWVkYmFja0ZpeCIgdmFsdWU9IicrZXNjKHZhbHVlKSsnIiBvbmNoYW5nZT0idG9nZ2xlRmVlZGJhY2tGaXgodGhpcykiPiAnK2VzYyhsYWJlbCkrJzwvbGFiZWw+J30KZnVuY3Rpb24gdG9nZ2xlRmVlZGJhY2tGaXgoZWwpe3ZhciBub25lPSdOb3RoaW5nIHdhcyBjb25mdXNpbmcnO2lmKGVsLnZhbHVlPT09bm9uZSYmZWwuY2hlY2tlZClkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCdpbnB1dFtuYW1lPSJmZWVkYmFja0ZpeCJdJykuZm9yRWFjaChmdW5jdGlvbih4KXtpZih4IT09ZWwpeC5jaGVja2VkPWZhbHNlfSk7ZWxzZSBpZihlbC5jaGVja2VkKWRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJ2lucHV0W25hbWU9ImZlZWRiYWNrRml4Il0nKS5mb3JFYWNoKGZ1bmN0aW9uKHgpe2lmKHgudmFsdWU9PT1ub25lKXguY2hlY2tlZD1mYWxzZX0pfQpmdW5jdGlvbiBzaG93Q2xhc3NGZWVkYmFjayhhLGludHJvKXthY3RpdmU9YTt2YXIgaD0nPGFydGljbGUgY2xhc3M9ImNhcmQgd29yayI+PGRpdiBjbGFzcz0ibGVzc29uLWtpY2tlciI+RmluaXNoIENsYXNzIEZlZWRiYWNrPC9kaXY+PGgyPicrZXNjKGEuc3ViamVjdCkrJyDCtyAnK2VzYyhsZXNzb25UaXRsZShhKSkrJzwvaDI+JysoaW50cm98fCcnKSsnPHAgY2xhc3M9Im11dGVkIj5UaGlzIGlzIGFib3V0IHRoZSBsZXNzb24sIG5vdCB5b3VyIGdyYWRlLiBHaXZlIHlvdXIgb3duIGFuc3dlciBzbyB3ZSBjYW4gbWFrZSBmdXR1cmUgbGVzc29ucyBiZXR0ZXIuPC9wPic7CmgrPSc8ZGl2IGNsYXNzPSJsZXNzb24tc3RlcCI+PGgzPjEuIEhvdyBkaWQgdGhpcyBjbGFzcyBmZWVsPzwvaDM+JytmZWVkYmFja1JhZGlvKCdmZWVkYmFja0RpZmZpY3VsdHknLCdFYXN5JywnRWFzeScpK2ZlZWRiYWNrUmFkaW8oJ2ZlZWRiYWNrRGlmZmljdWx0eScsJ0Fib3V0IHJpZ2h0JywnQWJvdXQgcmlnaHQnKStmZWVkYmFja1JhZGlvKCdmZWVkYmFja0RpZmZpY3VsdHknLCdIYXJkJywnSGFyZCcpKyc8L2Rpdj4nOwpoKz0nPGRpdiBjbGFzcz0ibGVzc29uLXN0ZXAiPjxoMz4yLiBEaWQgdGhlIHRlYWNoaW5nIGdpdmUgeW91IGVub3VnaCBpbmZvcm1hdGlvbiBiZWZvcmUgdGhlIHdvcms/PC9oMz4nK2ZlZWRiYWNrUmFkaW8oJ2ZlZWRiYWNrVGVhY2hpbmcnLF9fUE9TSVRJVkVfXywnWWVzIOKAlCBJIGhhZCBlbm91Z2ggaW5mb3JtYXRpb24nKStmZWVkYmFja1JhZGlvKCdmZWVkYmFja1RlYWNoaW5nJywnTW9zdGx5JywnTW9zdGx5IOKAlCBJIG5lZWRlZCBhIGxpdHRsZSBtb3JlJykrZmVlZGJhY2tSYWRpbygnZmVlZGJhY2tUZWFjaGluZycsJ05vIC0gSSBuZWVkZWQgbW9yZSB0ZWFjaGluZycsJ05vIOKAlCBJIG5lZWRlZCBtb3JlIHRlYWNoaW5nJykrJzwvZGl2Pic7CmgrPSc8ZGl2IGNsYXNzPSJsZXNzb24tc3RlcCI+PGgzPjMuIFdoYXQgc2hvdWxkIHdlIGZpeD88L2gzPjxkaXYgY2xhc3M9Im11dGVkIj5DaG9vc2UgZXZlcnl0aGluZyB0aGF0IGZpdHMsIG9yIGNob29zZSBOb3RoaW5nIHdhcyBjb25mdXNpbmcuPC9kaXY+JysKIGZlZWRiYWNrRml4KCdMZXNzb24gd29yZGluZycsJ0xlc3NvbiB3b3JkaW5nJykrZmVlZGJhY2tGaXgoJ1RlYWNoaW5nIC8gZXhwbGFuYXRpb24nLCdUZWFjaGluZyBvciBleHBsYW5hdGlvbicpK2ZlZWRiYWNrRml4KCdOZWVkIG1vcmUgZXhhbXBsZXMnLCdJIG5lZWRlZCBtb3JlIGV4YW1wbGVzJykrZmVlZGJhY2tGaXgoJ1dvcmtzaGVldCBkaXJlY3Rpb25zJywnV29ya3NoZWV0IGRpcmVjdGlvbnMnKStmZWVkYmFja0ZpeCgnUXVlc3Rpb24gd29yZGluZycsJ1F1ZXN0aW9uIHdvcmRpbmcnKStmZWVkYmFja0ZpeCgnV29yayB3YXMgbm90IHRhdWdodCcsJ1RoZSB3b3JrIHdhcyBub3QgdGF1Z2h0IGZpcnN0JykrZmVlZGJhY2tGaXgoJ1RvbyBtdWNoIGluZm9ybWF0aW9uIGF0IG9uY2UnLCdUb28gbXVjaCBpbmZvcm1hdGlvbiBhdCBvbmNlJykrZmVlZGJhY2tGaXgoJ1dvcmsgd2FzIHRvbyBlYXN5JywnVGhlIHdvcmsgd2FzIHRvbyBlYXN5JykrZmVlZGJhY2tGaXgoJ1dvcmsgd2FzIHRvbyByZXBldGl0aXZlJywnVGhlIHdvcmsgd2FzIHRvbyByZXBldGl0aXZlJykrZmVlZGJhY2tGaXgoJ1ZpZGVvIC8gcmVzb3VyY2Ugd2FzIG5vdCBoZWxwZnVsJywnVGhlIHZpZGVvIG9yIHJlc291cmNlIHdhcyBub3QgaGVscGZ1bCcpK2ZlZWRiYWNrRml4KCdOb3RoaW5nIHdhcyBjb25mdXNpbmcnLCdOb3RoaW5nIHdhcyBjb25mdXNpbmcnKSsnPC9kaXY+JzsKaCs9JzxkaXYgY2xhc3M9Imxlc3Nvbi1zdGVwIj48aDM+NC4gV2hhdCB3b3VsZCBoZWxwIG5leHQgdGltZT88L2gzPjx0ZXh0YXJlYSBpZD0iZmVlZGJhY2tIZWxwIiByb3dzPSIzIiBzdHlsZT0iZm9udDppbmhlcml0O2ZvbnQtc2l6ZToxNnB4O3dpZHRoOjEwMCU7cGFkZGluZzoxMHB4O2JvcmRlcjoxcHggc29saWQgdmFyKC0tbGluZSk7Ym9yZGVyLXJhZGl1czoxMHB4IiBwbGFjZWhvbGRlcj0iVGVsbCB1cyB3aGF0IHdvdWxkIG1ha2UgdGhlIG5leHQgbGVzc29uIGJldHRlci4iPjwvdGV4dGFyZWE+PC9kaXY+JzsKaCs9JzxkaXYgY2xhc3M9Imxlc3Nvbi1zdGVwIj48aDM+T3B0aW9uYWwgbm90ZTwvaDM+PGRpdiBjbGFzcz0ibXV0ZWQiPklmIHNvbWV0aGluZyBzcGVjaWZpYyB3YXMgY29uZnVzaW5nLCBuYW1lIHRoZSBleGFjdCB3b3JkLCBkaXJlY3Rpb24sIGV4YW1wbGUsIHF1ZXN0aW9uLCBvciBwYXJ0LjwvZGl2Pjx0ZXh0YXJlYSBpZD0iZmVlZGJhY2tOb3RlIiByb3dzPSIzIiBzdHlsZT0iZm9udDppbmhlcml0O2ZvbnQtc2l6ZToxNnB4O3dpZHRoOjEwMCU7cGFkZGluZzoxMHB4O2JvcmRlcjoxcHggc29saWQgdmFyKC0tbGluZSk7Ym9yZGVyLXJhZGl1czoxMHB4Ij48L3RleHRhcmVhPjwvZGl2Pic7CmgrPSc8ZGl2IGlkPSJmZWVkYmFja0Vycm9yIj48L2Rpdj48ZGl2IGNsYXNzPSJhY3Rpb25zIj48YnV0dG9uIGNsYXNzPSJmaW5pc2giIG9uY2xpY2s9InN1Ym1pdENsYXNzRmVlZGJhY2sodGhpcykiPlNhdmUgTXkgRmVlZGJhY2s8L2J1dHRvbj48YnV0dG9uIG9uY2xpY2s9ImxvYWREYXkoKSI+QmFjazwvYnV0dG9uPjwvZGl2PjwvYXJ0aWNsZT4nO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhcHAnKS5pbm5lckhUTUw9aH0KZnVuY3Rpb24gc3VibWl0Q2xhc3NGZWVkYmFjayhidG4pe2lmKCFhY3RpdmUpcmV0dXJuO3ZhciBkPWRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJ2lucHV0W25hbWU9ImZlZWRiYWNrRGlmZmljdWx0eSJdOmNoZWNrZWQnKSx0PWRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJ2lucHV0W25hbWU9ImZlZWRiYWNrVGVhY2hpbmciXTpjaGVja2VkJyksZml4ZXM9QXJyYXkuZnJvbShkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCdpbnB1dFtuYW1lPSJmZWVkYmFja0ZpeCJdOmNoZWNrZWQnKSkubWFwKGZ1bmN0aW9uKHgpe3JldHVybiB4LnZhbHVlfSksaGVscD0oZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2ZlZWRiYWNrSGVscCcpfHx7fSkudmFsdWV8fCcnLG5vdGU9KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdmZWVkYmFja05vdGUnKXx8e30pLnZhbHVlfHwnJyxlcnI9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2ZlZWRiYWNrRXJyb3InKTsKIGlmKCFkfHwhdHx8IWZpeGVzLmxlbmd0aHx8IWhlbHAudHJpbSgpKXtpZihlcnIpZXJyLmlubmVySFRNTD0nPGRpdiBjbGFzcz0iY2FyZCBlcnJvciI+PGI+UGxlYXNlIGZpbmlzaCB0aGUgZm91ciByZXF1aXJlZCBxdWVzdGlvbnMuPC9iPjwvZGl2Pic7cmV0dXJufQogaWYoYnRuKXtidG4uZGlzYWJsZWQ9dHJ1ZTtidG4udGV4dENvbnRlbnQ9J1NhdmluZ+KApid9dmFyIGZpeFZhbHVlPV9fRklYTU9ERV9fPT09J2FycmF5Jz9maXhlczpmaXhlcy5qb2luKCcsICcpLHBheWxvYWQ9e2RpZmZpY3VsdHk6ZC52YWx1ZSx0ZWFjaGluZ0Vub3VnaDp0LnZhbHVlLHdoYXRUb0ZpeDpmaXhWYWx1ZSx3aGF0V291bGRIZWxwOmhlbHAudHJpbSgpLHN0dWRlbnROb3RlOm5vdGUudHJpbSgpfTthcGkoJ2ZlZWRiYWNrJyx7cm93OmFjdGl2ZS5yb3csZmVlZGJhY2s6SlNPTi5zdHJpbmdpZnkocGF5bG9hZCl9KS50aGVuKGZ1bmN0aW9uKCl7YWN0aXZlLnN0dWRlbnRGZWVkYmFja1N1Ym1pdHRlZD10cnVlO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhcHAnKS5pbm5lckhUTUw9JzxkaXYgY2xhc3M9ImNhcmQiPjxoMj5UaGFua3Mg4oCUIHlvdXIgZmVlZGJhY2sgaXMgc2F2ZWQuPC9oMj48cD5Zb3VyIGNsYXNzIGlzIGZpbmlzaGVkLjwvcD48YnV0dG9uIG9uY2xpY2s9ImxvYWREYXkoKSI+QmFjayB0byBNeSBXb3JrPC9idXR0b24+PC9kaXY+J30pLmNhdGNoKGZ1bmN0aW9uKGUpe2lmKGJ0bil7YnRuLmRpc2FibGVkPWZhbHNlO2J0bi50ZXh0Q29udGVudD0nU2F2ZSBNeSBGZWVkYmFjayd9aWYoZXJyKWVyci5pbm5lckhUTUw9JzxkaXYgY2xhc3M9ImNhcmQgZXJyb3IiPjxiPkZlZWRiYWNrIHdhcyBub3Qgc2F2ZWQuPC9iPjxwPicrZXNjKGUmJmUubWVzc2FnZT9lLm1lc3NhZ2U6ZSkrJzwvcD48L2Rpdj4nfSl9CmFzc2lnbm1lbnRDYXJkPWZ1bmN0aW9uKGEpe3ZhciBmdXR1cmU9Y3VycmVudERhdGU+aXNvKG5ldyBEYXRlKCkpLHdvcmtpbmc9WydJbiBQcm9ncmVzcycsJ1N0aWxsIFdvcmtpbmcnLCdOZWVkIEhlbHAnXS5pbmRleE9mKGEuc3RhdHVzKT49MCxkb25lPWEuc3RhdHVzPT09J0RvbmUnLHJldmlld2VkPWRvbmUmJmhhc1JldmlldyhhKSxwZW5kaW5nPWRvbmUmJiFmZWVkYmFja0RvbmUoYSksYWN0aW9ucz1bXTtpZihwcmV2aWV3TW9kZSl7aWYocmV2aWV3ZWQpYWN0aW9ucy5wdXNoKCc8YnV0dG9uIGNsYXNzPSJzdGFydCIgb25jbGljaz0icHJldmlld1dvcmsoJythLnJvdysnKSI+VmlldyBSZXZpZXc8L2J1dHRvbj4nKTtlbHNlIGFjdGlvbnMucHVzaCgnPGJ1dHRvbiBjbGFzcz0ic3RhcnQiIG9uY2xpY2s9InByZXZpZXdXb3JrKCcrYS5yb3crJykiPlByZXZpZXc8L2J1dHRvbj4nKX1lbHNlIGlmKHBlbmRpbmcpe2FjdGlvbnMucHVzaCgnPGJ1dHRvbiBjbGFzcz0iZmluaXNoIiBvbmNsaWNrPSJvcGVuQ2xhc3NGZWVkYmFjaygnK2Eucm93KycpIj5GaW5pc2ggQ2xhc3MgRmVlZGJhY2s8L2J1dHRvbj4nKTtpZihyZXZpZXdlZClhY3Rpb25zLnB1c2goJzxidXR0b24gY2xhc3M9InN0YXJ0IiBvbmNsaWNrPSJwcmV2aWV3V29yaygnK2Eucm93KycpIj5WaWV3IFJldmlldzwvYnV0dG9uPicpfWVsc2UgaWYocmV2aWV3ZWQpYWN0aW9ucy5wdXNoKCc8YnV0dG9uIGNsYXNzPSJzdGFydCIgb25jbGljaz0icHJldmlld1dvcmsoJythLnJvdysnKSI+VmlldyBSZXZpZXc8L2J1dHRvbj4nKTtlbHNlIGlmKCFkb25lJiYhZnV0dXJlKWFjdGlvbnMucHVzaCh3b3JraW5nPyc8YnV0dG9uIGNsYXNzPSJzdGFydCIgb25jbGljaz0iY29udGludWVXb3JrKCcrYS5yb3crJykiPkNvbnRpbnVlPC9idXR0b24+JzonPGJ1dHRvbiBjbGFzcz0ic3RhcnQiIG9uY2xpY2s9InN0YXJ0V29yaygnK2Eucm93KycsdGhpcykiPlN0YXJ0PC9idXR0b24+Jyk7dmFyIGI9YWN0aW9ucy5sZW5ndGg/JzxkaXYgY2xhc3M9ImZvbGxvd3VwLWFjdGlvbnMiPicrYWN0aW9ucy5qb2luKCcnKSsnPC9kaXY+JzonJyxzdGF0ZT1kb25lPyc8c3BhbiBjbGFzcz0ic3RhdHVzIj4nKyhwZW5kaW5nPydGZWVkYmFjayBQZW5kaW5nJzoocmV2aWV3ZWQ/J1Jldmlld2VkJzonRmluaXNoZWQnKSkrJzwvc3Bhbj4nOmZ1dHVyZT8nPHNwYW4gY2xhc3M9InN0YXR1cyI+VXBjb21pbmc8L3NwYW4+JzonJyxzaGFyZWQ9c2hhcmVkQ2xhc3MoYSk/JyBzaGFyZWQnOicnLHRoZW1lPXN1YmplY3RUaGVtZShhKTtyZXR1cm4gJzxhcnRpY2xlIGNsYXNzPSJjYXJkIGNsYXNzLWNhcmQgc3ViamVjdC0nK3RoZW1lWzBdK3NoYXJlZCsnIj48ZGl2IGNsYXNzPSJjbGFzcy10b3AiPjxkaXYgY2xhc3M9ImNsYXNzLXN1YmplY3Qtd3JhcCI+PHNwYW4gY2xhc3M9InN1YmplY3QtYmFkZ2UiIGRhdGEtc3ViamVjdD0iJyt0aGVtZVswXSsnIj4nK3RoZW1lWzFdKyc8L3NwYW4+PGRpdiBjbGFzcz0iY2xhc3Mtc3ViamVjdCI+Jytlc2MoYS5zdWJqZWN0KSsnPC9kaXY+PC9kaXY+PGRpdiBjbGFzcz0iY2xhc3MtdGltZSI+Jytlc2MoYS50aW1lJiZTdHJpbmcoYS50aW1lKS50b0xvd2VyQ2FzZSgpIT09J2ZsZXhpYmxlJz9sZXNzb25UaW1lUmFuZ2UoYSk6JycpKyc8L2Rpdj48L2Rpdj48ZGl2IGNsYXNzPSJjbGFzcy1ib3R0b20iPjxkaXYgY2xhc3M9ImNsYXNzLXRpdGxlIj4nK2VzYyhsZXNzb25UaXRsZShhKSkrJzwvZGl2PjxkaXYgY2xhc3M9ImNsYXNzLWNhcmQtYWN0aW9uIj4nK2Irc3RhdGUrJzwvZGl2PjwvZGl2PjxzcGFuIGNsYXNzPSJ0aGVtZS13YXRlcm1hcmsiIGRhdGEtc3ViamVjdD0iJyt0aGVtZVswXSsnIj4nK2VzYyh0aGVtZU1vdGlmKHBvcnRhbFRoZW1lLHRoZW1lWzBdKSkrJzwvc3Bhbj48L2FydGljbGU+J30KZmluaXNoQWN0aXZlPWZ1bmN0aW9uKGJ0bil7aWYoIWFjdGl2ZSlyZXR1cm47aWYoYnRuKXtidG4uZGlzYWJsZWQ9dHJ1ZTtidG4udGV4dENvbnRlbnQ9J1NhdmluZ+KApid9aWYoYWN0aXZlLmNvbXBsZXRpb25Nb2RlPT09J21hc3RlcnknKXJldHVybiBvcGVuTWFzdGVyeSgpO2FwaSgnZmluaXNoJyx7cm93OmFjdGl2ZS5yb3d9KS50aGVuKGZ1bmN0aW9uKCl7YWN0aXZlLnN0YXR1cz0nRG9uZSc7YWN0aXZlLnN0dWRlbnRGZWVkYmFja1N1Ym1pdHRlZD1mYWxzZTtzaG93Q2xhc3NGZWVkYmFjayhhY3RpdmUpfSkuY2F0Y2goZXJyb3JCb3gpfQpzdWJtaXRNYXN0ZXJ5PWZ1bmN0aW9uKGNoZWNrSWQsY291bnQsYnRuKXt2YXIgYW5zPVtdO2Zvcih2YXIgaT0wO2k8Y291bnQ7aSsrKXt2YXIgcj1kb2N1bWVudC5xdWVyeVNlbGVjdG9yKCdpbnB1dFtuYW1lPSJtcScraSsnIl06Y2hlY2tlZCcpLHQ9ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21xJytpKTthbnMucHVzaChyP3IudmFsdWU6KHQ/dC52YWx1ZTonJykpfWlmKGJ0bil7YnRuLmRpc2FibGVkPXRydWU7YnRuLnRleHRDb250ZW50PSdDaGVja2luZ+KApid9YXBpKCdzdWJtaXQnLHtyb3c6YWN0aXZlLnJvdyxjaGVja0lkOmNoZWNrSWQsYW5zd2VyczpKU09OLnN0cmluZ2lmeShhbnMpfSkudGhlbihmdW5jdGlvbihyKXtpZihyLm1hc3RlcmVkKXthY3RpdmUuc3RhdHVzPSdEb25lJzthY3RpdmUuc3R1ZGVudEZlZWRiYWNrU3VibWl0dGVkPWZhbHNlO3Nob3dDbGFzc0ZlZWRiYWNrKGFjdGl2ZSwnPGRpdiBjbGFzcz0ibm90ZSI+PGI+UmVhZHkgQ2hlY2sgY29tcGxldGU6PC9iPiAnK2VzYyhyLmNvcnJlY3QpKycgb2YgJytlc2Moci50b3RhbCkrJyBjb3JyZWN0LiAnK2VzYyhyLmZlZWRiYWNrfHwnJykrJzwvZGl2PicpfWVsc2UgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2FwcCcpLmlubmVySFRNTD0nPGRpdiBjbGFzcz0iY2FyZCI+PGgyPkdvb2Qgd29yayDigJQgbGV04oCZcyBrZWVwIHByYWN0aWNpbmcuPC9oMj48cD48Yj4nK2VzYyhyLmNvcnJlY3QpKycgb2YgJytlc2Moci50b3RhbCkrJyBjb3JyZWN0PC9iPjwvcD48cD4nK2VzYyhyLmZlZWRiYWNrfHwnJykrJzwvcD48YnV0dG9uIG9uY2xpY2s9ImxvYWREYXkoKSI+QmFjayB0byBNeSBXb3JrPC9idXR0b24+PC9kaXY+J30pLmNhdGNoKGVycm9yQm94KX0=
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import base64, concurrent.futures, json, os, time, urllib.parse, urllib.request
-
-          backend = os.environ['NATALIE_BACKEND']
-
-          def call_feedback(payload):
-              params = {'api':'feedback','row':'31','feedback':json.dumps(payload,separators=(',',':')),'callback':'x'}
-              url = backend + '?' + urllib.parse.urlencode(params)
-              for _ in range(3):
-                  try:
-                      raw = urllib.request.urlopen(url, timeout=20).read().decode().strip()
-                      return json.loads(raw[2:-2]) if raw.startswith('x(') else {'ok':False,'error':'Unexpected backend response'}
-                  except Exception as exc:
-                      last = exc
-                      time.sleep(.5)
-              return {'ok':False,'error':'HTTP probe failed: '+repr(last)}
-
-          phrases = [
-              'I had enough information','I had enough information before the work','I had enough information before I started the work','I had enough teaching','I had enough teaching before the work','I had what I needed','I had what I needed before the work','I was ready','I was ready for the work','I was ready to do the work','I felt ready','I felt ready for the work','I knew what to do','I knew how to do the work','I understood the lesson','I understood what to do','I could do the work','I could do the work on my own','the teaching was enough','the lesson was enough','the lesson taught me enough','the lesson prepared me','the lesson prepared me for the work','the teaching prepared me','the teaching prepared me for the work','the teaching gave me enough information','the teaching gave me enough information before the work','the lesson gave me enough information','the lesson gave me enough information before the work','I got enough information','I got enough teaching','I got what I needed','I learned enough before the work','I did not need more teaching','I did not need extra teaching'
-          ]
-          candidates = ['Yes','Enough','I had enough information','The teaching gave me enough information before the work'] + [p+q for p in ['Yes - ','Yes — ','Yes, ','Yes: '] for q in phrases]
-
-          def probe(v):
-              r = call_feedback({'difficulty':'About right','teachingEnough':v})
-              return v, r.get('error','')
-
-          positive = None
-          with concurrent.futures.ThreadPoolExecutor(max_workers=12) as ex:
-              for value, error in ex.map(probe, candidates):
-                  if error and error != 'Tell us whether the lesson taught you enough.':
-                      positive = value
-                      break
-          if not positive:
-              raise SystemExit('Could not resolve positive Teaching Enough value; no portal change made.')
-          print('Resolved positive teaching value:', positive)
-
-          r = call_feedback({'difficulty':'About right','teachingEnough':positive,'whatToFix':['Nothing was confusing']})
-          fix_mode = 'array'
-          if r.get('error') != 'Choose what would help next time.':
-              r = call_feedback({'difficulty':'About right','teachingEnough':positive,'whatToFix':'Nothing was confusing'})
-              fix_mode = 'string'
-          if r.get('error') != 'Choose what would help next time.':
-              raise SystemExit('Could not resolve What To Fix payload shape; no portal change made. Last error: '+str(r.get('error')))
-          print('Resolved What To Fix mode:', fix_mode)
-
-          path = Path('index.html')
-          text = path.read_text(encoding='utf-8')
-          marker = "window.addEventListener('hashchange',function(){backend='';init()});init();"
-          if marker not in text:
-              raise SystemExit('Portal init marker not found; refusing unsafe patch.')
-          if 'function showClassFeedback(a,intro)' in text:
-              print('Feedback patch already present; nothing to do.')
-              raise SystemExit(0)
-
-          patch = base64.b64decode(os.environ['PATCH_B64']).decode('utf-8')
-          patch = patch.replace('__POSITIVE__', json.dumps(positive)).replace('__FIXMODE__', json.dumps(fix_mode))
-          text = text.replace(marker, patch + '\n' + marker)
-          path.write_text(text, encoding='utf-8')
-          updated = path.read_text(encoding='utf-8')
-          required = ['function showClassFeedback(a,intro)','Finish Class Feedback',"api('feedback'",'Feedback Pending','studentFeedbackSubmitted']
-          missing = [x for x in required if x not in updated]
-          if missing or updated.count(marker) != 1:
-              raise SystemExit('Patch validation failed: '+repr(missing))
-          print('Portal patch validation passed.')
-          PY
-
-      - name: Commit portal repair
-        run: |
-          git config user.name 'Willberal1816'
-          git config user.email '204775082+Willberal1816@users.noreply.github.com'
-          git add index.html
-          if git diff --cached --quiet; then
-            echo 'No portal change needed.'
-            exit 0
-          fi
-          git commit -m 'Restore student lesson feedback prompts'
-          git push
+      - run: echo "Student lesson feedback repair is already deployed. This helper is intentionally inactive."
