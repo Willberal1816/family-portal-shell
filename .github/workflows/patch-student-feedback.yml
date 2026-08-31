@@ -1,0 +1,170 @@
+name: Patch student lesson feedback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-student-feedback.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch and validate feedback flow
+        env:
+          NATALIE_BACKEND: https://script.google.com/macros/s/AKfycbxe1gF7EQzRy_gu0TfHI2AFfvLAalOmcImu8Lv7mJ-lG7gib1DWULFkvj5J8XHioRKBZg/exec
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import concurrent.futures, json, urllib.parse, urllib.request, time
+
+          backend = __import__('os').environ['NATALIE_BACKEND']
+
+          def call_feedback(payload):
+              params = {
+                  'api': 'feedback',
+                  'row': '31',
+                  'feedback': json.dumps(payload, separators=(',', ':')),
+                  'callback': 'x',
+              }
+              url = backend + '?' + urllib.parse.urlencode(params)
+              for _ in range(3):
+                  try:
+                      raw = urllib.request.urlopen(url, timeout=20).read().decode().strip()
+                      if not raw.startswith('x('):
+                          return {'ok': False, 'error': 'Unexpected backend response'}
+                      return json.loads(raw[2:-2])
+                  except Exception as exc:
+                      last = exc
+                      time.sleep(.5)
+              return {'ok': False, 'error': 'HTTP probe failed: ' + repr(last)}
+
+          prefixes = ['Yes - ', 'Yes — ', 'Yes, ', 'Yes: ']
+          phrases = [
+              'I had enough information',
+              'I had enough information before the work',
+              'I had enough information before I started the work',
+              'I had enough teaching',
+              'I had enough teaching before the work',
+              'I had what I needed',
+              'I had what I needed before the work',
+              'I was ready',
+              'I was ready for the work',
+              'I was ready to do the work',
+              'I felt ready',
+              'I felt ready for the work',
+              'I knew what to do',
+              'I knew how to do the work',
+              'I understood the lesson',
+              'I understood what to do',
+              'I could do the work',
+              'I could do the work on my own',
+              'the teaching was enough',
+              'the lesson was enough',
+              'the lesson taught me enough',
+              'the lesson prepared me',
+              'the lesson prepared me for the work',
+              'the teaching prepared me',
+              'the teaching prepared me for the work',
+              'the teaching gave me enough information',
+              'the teaching gave me enough information before the work',
+              'the lesson gave me enough information',
+              'the lesson gave me enough information before the work',
+              'I got enough information',
+              'I got enough teaching',
+              'I got what I needed',
+              'I learned enough before the work',
+              'I did not need more teaching',
+              'I did not need extra teaching',
+          ]
+          candidates = ['Yes', 'Enough', 'I had enough information', 'The teaching gave me enough information before the work']
+          candidates += [p + q for p in prefixes for q in phrases]
+
+          def probe(v):
+              r = call_feedback({'difficulty':'About right','teachingEnough':v})
+              return v, r.get('error','')
+
+          positive = None
+          with concurrent.futures.ThreadPoolExecutor(max_workers=12) as ex:
+              for value, error in ex.map(probe, candidates):
+                  if error and error != 'Tell us whether the lesson taught you enough.':
+                      positive = value
+                      break
+          if not positive:
+              raise SystemExit('Could not resolve the backend positive Teaching Enough value; no portal change was made.')
+          print('Resolved positive teaching value:', positive)
+
+          r = call_feedback({'difficulty':'About right','teachingEnough':positive,'whatToFix':['Nothing was confusing']})
+          fix_mode = 'array'
+          if r.get('error') != 'Choose what would help next time.':
+              r = call_feedback({'difficulty':'About right','teachingEnough':positive,'whatToFix':'Nothing was confusing'})
+              fix_mode = 'string'
+          if r.get('error') != 'Choose what would help next time.':
+              raise SystemExit('Could not resolve What To Fix payload shape; no portal change was made. Last error: '+str(r.get('error')))
+          print('Resolved What To Fix mode:', fix_mode)
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          marker = "window.addEventListener('hashchange',function(){backend='';init()});init();"
+          if marker not in text:
+              raise SystemExit('Portal init marker not found; refusing an unsafe patch.')
+          if 'function showClassFeedback(a,intro)' in text:
+              print('Feedback patch already present; nothing to do.')
+              raise SystemExit(0)
+
+          positive_js = json.dumps(positive)
+          fix_mode_js = json.dumps(fix_mode)
+          patch = r'''
+// Student Lesson Feedback flow — completed classes remain open until student feedback is saved.
+function feedbackDone(a){var v=a&&a.studentFeedbackSubmitted;return v===true||String(v||'').toLowerCase()==='true'||String(v||'').toLowerCase()==='yes'}
+function openClassFeedback(row){var a=findAssignment(row);if(a)showClassFeedback(a)}
+function feedbackRadio(name,value,label){return '<label style="display:block;margin:9px 0"><input type="radio" name="'+name+'" value="'+esc(value)+'"> '+esc(label)+'</label>'}
+function feedbackFix(value,label){return '<label style="display:block;margin:9px 0"><input type="checkbox" name="feedbackFix" value="'+esc(value)+'" onchange="toggleFeedbackFix(this)"> '+esc(label)+'</label>'}
+function toggleFeedbackFix(el){var none='Nothing was confusing';if(el.value===none&&el.checked)document.querySelectorAll('input[name="feedbackFix"]').forEach(function(x){if(x!==el)x.checked=false});else if(el.checked)document.querySelectorAll('input[name="feedbackFix"]').forEach(function(x){if(x.value===none)x.checked=false})}
+function showClassFeedback(a,intro){active=a;var h='<article class="card work"><div class="lesson-kicker">Finish Class Feedback</div><h2>'+esc(a.subject)+' · '+esc(lessonTitle(a))+'</h2>'+(intro||'')+'<p class="muted">This is about the lesson, not your grade. Give your own answer so we can make future lessons better.</p>';
+h+='<div class="lesson-step"><h3>1. How did this class feel?</h3>'+feedbackRadio('feedbackDifficulty','Easy','Easy')+feedbackRadio('feedbackDifficulty','About right','About right')+feedbackRadio('feedbackDifficulty','Hard','Hard')+'</div>';
+h+='<div class="lesson-step"><h3>2. Did the teaching give you enough information before the work?</h3>'+feedbackRadio('feedbackTeaching',__POSITIVE__,'Yes — I had enough information')+feedbackRadio('feedbackTeaching','Mostly','Mostly — I needed a little more')+feedbackRadio('feedbackTeaching','No - I needed more teaching','No — I needed more teaching')+'</div>';
+h+='<div class="lesson-step"><h3>3. What should we fix?</h3><div class="muted">Choose everything that fits, or choose Nothing was confusing.</div>'+
+ feedbackFix('Lesson wording','Lesson wording')+feedbackFix('Teaching / explanation','Teaching or explanation')+feedbackFix('Need more examples','I needed more examples')+feedbackFix('Worksheet directions','Worksheet directions')+feedbackFix('Question wording','Question wording')+feedbackFix('Work was not taught','The work was not taught first')+feedbackFix('Too much information at once','Too much information at once')+feedbackFix('Work was too easy','The work was too easy')+feedbackFix('Work was too repetitive','The work was too repetitive')+feedbackFix('Video / resource was not helpful','The video or resource was not helpful')+feedbackFix('Nothing was confusing','Nothing was confusing')+'</div>';
+h+='<div class="lesson-step"><h3>4. What would help next time?</h3><textarea id="feedbackHelp" rows="3" style="font:inherit;font-size:16px;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px" placeholder="Tell us what would make the next lesson better."></textarea></div>';
+h+='<div class="lesson-step"><h3>Optional note</h3><div class="muted">If something specific was confusing, name the exact word, direction, example, question, or part.</div><textarea id="feedbackNote" rows="3" style="font:inherit;font-size:16px;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px"></textarea></div>';
+h+='<div id="feedbackError"></div><div class="actions"><button class="finish" onclick="submitClassFeedback(this)">Save My Feedback</button><button onclick="loadDay()">Back</button></div></article>';document.getElementById('app').innerHTML=h}
+function submitClassFeedback(btn){if(!active)return;var d=document.querySelector('input[name="feedbackDifficulty"]:checked'),t=document.querySelector('input[name="feedbackTeaching"]:checked'),fixes=Array.from(document.querySelectorAll('input[name="feedbackFix"]:checked')).map(function(x){return x.value}),help=(document.getElementById('feedbackHelp')||{}).value||'',note=(document.getElementById('feedbackNote')||{}).value||'',err=document.getElementById('feedbackError');
+ if(!d||!t||!fixes.length||!help.trim()){if(err)err.innerHTML='<div class="card error"><b>Please finish the four required questions.</b></div>';return}
+ if(btn){btn.disabled=true;btn.textContent='Saving…'}var fixValue=__FIXMODE__==='array'?fixes:fixes.join(', '),payload={difficulty:d.value,teachingEnough:t.value,whatToFix:fixValue,whatWouldHelp:help.trim(),studentNote:note.trim()};api('feedback',{row:active.row,feedback:JSON.stringify(payload)}).then(function(){active.studentFeedbackSubmitted=true;document.getElementById('app').innerHTML='<div class="card"><h2>Thanks — your feedback is saved.</h2><p>Your class is finished.</p><button onclick="loadDay()">Back to My Work</button></div>'}).catch(function(e){if(btn){btn.disabled=false;btn.textContent='Save My Feedback'}if(err)err.innerHTML='<div class="card error"><b>Feedback was not saved.</b><p>'+esc(e&&e.message?e.message:e)+'</p></div>'})}
+assignmentCard=function(a){var future=currentDate>iso(new Date()),working=['In Progress','Still Working','Need Help'].indexOf(a.status)>=0,done=a.status==='Done',reviewed=done&&hasReview(a),pending=done&&!feedbackDone(a),actions=[];if(previewMode){if(reviewed)actions.push('<button class="start" onclick="previewWork('+a.row+')">View Review</button>');else actions.push('<button class="start" onclick="previewWork('+a.row+')">Preview</button>')}else if(pending){actions.push('<button class="finish" onclick="openClassFeedback('+a.row+')">Finish Class Feedback</button>');if(reviewed)actions.push('<button class="start" onclick="previewWork('+a.row+')">View Review</button>')}else if(reviewed)actions.push('<button class="start" onclick="previewWork('+a.row+')">View Review</button>');else if(!done&&!future)actions.push(working?'<button class="start" onclick="continueWork('+a.row+')">Continue</button>':'<button class="start" onclick="startWork('+a.row+',this)">Start</button>');var b=actions.length?'<div class="followup-actions">'+actions.join('')+'</div>':'',state=done?'<span class="status">'+(pending?'Feedback Pending':(reviewed?'Reviewed':'Finished'))+'</span>':future?'<span class="status">Upcoming</span>':'',shared=sharedClass(a)?' shared':'',theme=subjectTheme(a);return '<article class="card class-card subject-'+theme[0]+shared+'"><div class="class-top"><div class="class-subject-wrap"><span class="subject-badge" data-subject="'+theme[0]+'">'+theme[1]+'</span><div class="class-subject">'+esc(a.subject)+'</div></div><div class="class-time">'+esc(a.time&&String(a.time).toLowerCase()!=='flexible'?lessonTimeRange(a):'')+'</div></div><div class="class-bottom"><div class="class-title">'+esc(lessonTitle(a))+'</div><div class="class-card-action">'+b+state+'</div></div><span class="theme-watermark" data-subject="'+theme[0]+'">'+esc(themeMotif(portalTheme,theme[0]))+'</span></article>'}
+finishActive=function(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Saving…'}if(active.completionMode==='mastery')return openMastery();api('finish',{row:active.row}).then(function(){active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active)}).catch(errorBox)}
+submitMastery=function(checkId,count,btn){var ans=[];for(var i=0;i<count;i++){var r=document.querySelector('input[name="mq'+i+'"]:checked'),t=document.getElementById('mq'+i);ans.push(r?r.value:(t?t.value:''))}if(btn){btn.disabled=true;btn.textContent='Checking…'}api('submit',{row:active.row,checkId:checkId,answers:JSON.stringify(ans)}).then(function(r){if(r.mastered){active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active,'<div class="note"><b>Ready Check complete:</b> '+esc(r.correct)+' of '+esc(r.total)+' correct. '+esc(r.feedback||'')+'</div>')}else document.getElementById('app').innerHTML='<div class="card"><h2>Good work — let’s keep practicing.</h2><p><b>'+esc(r.correct)+' of '+esc(r.total)+' correct</b></p><p>'+esc(r.feedback||'')+'</p><button onclick="loadDay()">Back to My Work</button></div>'}).catch(errorBox)}
+'''.replace('__POSITIVE__', positive_js).replace('__FIXMODE__', fix_mode_js)
+
+          text = text.replace(marker, patch + '\n' + marker)
+          path.write_text(text, encoding='utf-8')
+
+          updated = path.read_text(encoding='utf-8')
+          required = ['function showClassFeedback(a,intro)','Finish Class Feedback','api(\'feedback\'','Feedback Pending','studentFeedbackSubmitted']
+          missing = [x for x in required if x not in updated]
+          if missing:
+              raise SystemExit('Patch validation failed; missing: '+repr(missing))
+          if updated.count(marker) != 1:
+              raise SystemExit('Patch validation failed; init marker count changed unexpectedly.')
+          print('Portal patch validation passed.')
+          PY
+
+      - name: Commit portal repair
+        run: |
+          git config user.name 'Willberal1816'
+          git config user.email '204775082+Willberal1816@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No portal change needed.'
+            exit 0
+          fi
+          git commit -m 'Restore student lesson feedback prompts'
+          git push
