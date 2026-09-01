@@ -1,0 +1,70 @@
+name: Validate student class lifecycle
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'worksheets/**/*.html'
+      - 'worksheets/school-page-controls.js'
+      - 'worksheets/school-page-controls.css'
+      - '.github/workflows/validate-student-class-flow.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'worksheets/**/*.html'
+      - 'worksheets/school-page-controls.js'
+      - 'worksheets/school-page-controls.css'
+      - '.github/workflows/validate-student-class-flow.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate end-to-end student controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          portal = Path('index.html').read_text(encoding='utf-8')
+          errors = []
+
+          required_portal = {
+              'active-class continuity': "moranSchoolActiveClass",
+              'same-class resume': "reconcileActiveClass",
+              'working Finish Class control': "Finish Class",
+              'finish opens feedback': "showClassFeedback(active)",
+              'feedback submission': "submitClassFeedback",
+              'return after feedback': "Back to School Portal",
+              'iOS print fallback': "if(isIOSDevice()){window.open(url,'_blank');return}",
+              'print-step persistence': "saveStepDone(active,'+i+');rememberActiveClass(active);printWorksheet",
+          }
+          for label, marker in required_portal.items():
+              if marker not in portal:
+                  errors.append(f'Portal missing {label}: {marker}')
+
+          if "if(active.completionMode==='mastery')return openMastery()" in portal:
+              errors.append('Legacy mastery Finish gate was reintroduced')
+
+          controls = Path('worksheets/school-page-controls.js').read_text(encoding='utf-8')
+          for marker in ['Back to This Class', 'history.back()', 'moranSchoolPortalReturnUrl']:
+              if marker not in controls:
+                  errors.append(f'Shared lesson return control missing: {marker}')
+
+          html_pages = sorted(Path('worksheets').rglob('*.html'))
+          missing_controls = []
+          for page in html_pages:
+              text = page.read_text(encoding='utf-8', errors='replace')
+              if 'school-page-controls.js' not in text:
+                  missing_controls.append(str(page))
+          if missing_controls:
+              errors.append('Student-facing HTML missing shared Back-to-Class controls:\n  ' + '\n  '.join(missing_controls))
+
+          if errors:
+              raise SystemExit('\n\n'.join(errors))
+
+          print(f'Validated portal lifecycle and Back-to-Class controls on {len(html_pages)} worksheet/lesson pages.')
+          PY
