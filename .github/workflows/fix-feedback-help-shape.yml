@@ -1,13 +1,39 @@
-name: Retired iOS paper-link helper
+name: Restore universal printable handling
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-feedback-help-shape.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  retired:
+  patch:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "iOS paper and mastery-check links now open the source PDF directly; this helper is inactive."
+      - uses: actions/checkout@v4
+      - name: Restore print button behavior
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="else if(step.kind==='paper'){if(isIOSDevice())h+='<a class=\"lesson-action\" href=\"'+esc(step.resource.url)+'\" target=\"_blank\" rel=\"noopener\"><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span><span class=\"print-note\">Open PDF</span></a>';else h+='<button class=\"lesson-action\" onclick=\"printWorksheet(\\\''+esc(step.resource.url)+'\\\')\"><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span><span class=\"print-note\">Print</span></button>'}"
+          new="else if(step.kind==='paper'){h+='<button class=\"lesson-action\" onclick=\"printWorksheet(\\\''+esc(step.resource.url)+'\\\')\"><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span><span class=\"print-note\">Print</span></button>'}"
+          if old not in s:
+              raise SystemExit('print branch anchor not found')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit portal patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Restore universal worksheet printing"
+          git push
