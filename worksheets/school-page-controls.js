@@ -4,19 +4,21 @@
   var FALLBACK='/family-portal-shell/';
   function savedPortal(){try{return localStorage.getItem(KEY)||''}catch(e){return ''}}
   function returnToPortal(){
-    var saved=savedPortal();
     try{
       if(window.opener&&!window.opener.closed){
-        setTimeout(function(){try{location.href=saved||FALLBACK}catch(e){}},300);
+        window.opener.focus();
         window.close();
         return;
       }
     }catch(e){}
-    if(saved){location.href=saved;return}
     try{
-      if(document.referrer&&document.referrer.indexOf('/family-portal-shell/')!==-1&&history.length>1){history.back();return}
+      if(document.referrer&&document.referrer.indexOf('/family-portal-shell/')!==-1&&history.length>1){
+        history.back();
+        return;
+      }
     }catch(e){}
-    location.href=FALLBACK;
+    var saved=savedPortal();
+    location.href=saved||FALLBACK;
   }
   function addControls(){
     if(document.getElementById('school-page-controls'))return;
