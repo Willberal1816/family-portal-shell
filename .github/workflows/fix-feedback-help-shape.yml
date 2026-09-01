@@ -1,121 +1,13 @@
-name: One-time portal class continuity safeguard
+name: Retired portal class continuity helper
 
 on:
-  push:
-    paths:
-      - '.github/workflows/fix-feedback-help-shape.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Preserve active class and same-session navigation
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          if "var ACTIVE_CLASS_KEY='moranSchoolActiveClass';" not in s:
-              marker = "function api(action,params){"
-              if marker not in s:
-                  raise SystemExit('api marker not found')
-              lines = [
-                  "var ACTIVE_CLASS_KEY='moranSchoolActiveClass';",
-                  "function rememberActiveClass(a){if(previewMode||!a)return;try{localStorage.setItem(ACTIVE_CLASS_KEY,JSON.stringify({id:String(a.id||''),row:Number(a.row||0),date:currentDate,startedAt:Date.now()}))}catch(e){}}",
-                  "function readActiveClass(){try{return JSON.parse(localStorage.getItem(ACTIVE_CLASS_KEY)||'null')}catch(e){return null}}",
-                  "function clearActiveClass(){try{localStorage.removeItem(ACTIVE_CLASS_KEY)}catch(e){}}",
-                  "function reconcileActiveClass(d){var r=readActiveClass();if(!r||r.date!==currentDate){if(r)clearActiveClass();return null}var list=(d&&d.assignments)||[],a=null;for(var i=0;i<list.length;i++){if((r.id&&String(list[i].id||'')===r.id)||(!r.id&&r.row&&Number(list[i].row)===Number(r.row))){a=list[i];break}}if(!a||a.status==='Done'){clearActiveClass();return null}if(a.status==='Not Started'){a.status='In Progress';api('start',{row:a.row}).catch(function(){})}return a}",
-                  "function returnToDay(){clearActiveClass();loadDay()}",
-                  ""
-              ]
-              s = s.replace(marker, '\n'.join(lines) + marker, 1)
-
-          old = "function loadDay(){stopClock();stopFollowUpTimers();active=null;updateDateNav();document.body.className='';document.getElementById('app').innerHTML='<div class=\"card empty\">Opening school day…</div>';api('data',{date:currentDate}).then(function(d){data=d;resetTodayLocalProgress(d);renderDay()}).catch(errorBox)}"
-          new = "function loadDay(){stopClock();stopFollowUpTimers();active=null;updateDateNav();document.body.className='';document.getElementById('app').innerHTML='<div class=\"card empty\">Opening school day…</div>';api('data',{date:currentDate}).then(function(d){data=d;resetTodayLocalProgress(d);var resume=reconcileActiveClass(d);renderDay();if(resume)showWork(resume)}).catch(errorBox)}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('loadDay pattern not found')
-
-          old = "function startWork(row,btn){var a=findAssignment(row);if(!a)return;if(a.refresher){if(btn){btn.disabled=false;btn.textContent='Start'}showWork(a,0);return}if(btn){btn.disabled=true;btn.textContent='Starting…'}api('start',{row:row}).then(function(){a.status='In Progress';showWork(a)}).catch(errorBox)}"
-          new = "function startWork(row,btn){var a=findAssignment(row);if(!a)return;if(a.refresher){if(btn){btn.disabled=false;btn.textContent='Start'}showWork(a,0);return}if(btn){btn.disabled=true;btn.textContent='Starting…'}api('start',{row:row}).then(function(){a.status='In Progress';rememberActiveClass(a);showWork(a)}).catch(errorBox)}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('startWork pattern not found')
-
-          old = "function continueWork(row){var a=findAssignment(row);if(!a)return;showWork(a)}"
-          new = "function continueWork(row){var a=findAssignment(row);if(!a)return;rememberActiveClass(a);showWork(a)}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('continueWork pattern not found')
-
-          old = "function showWork(a,openIdx){active=a;var steps=buildLessonSteps(a),done=readStepDone(a);"
-          new = "function showWork(a,openIdx){active=a;if(!previewMode&&a.status!=='Done')rememberActiveClass(a);var steps=buildLessonSteps(a),done=readStepDone(a);"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('showWork prefix not found')
-
-          old = "else{h+='<a class=\"lesson-action\" href=\"'+esc(step.resource.url)+'\" target=\"_blank\"><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span></a>'}"
-          new = "else{var samePortal=String(step.resource.url||'').indexOf('https://willberal1816.github.io/family-portal-shell/')===0;h+='<a class=\"lesson-action\" href=\"'+esc(step.resource.url)+'\" onclick=\"saveStepDone(active,'+i+');rememberActiveClass(active)\"'+(samePortal?'':' target=\"_blank\" rel=\"noopener\"')+'><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span></a>'}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('resource-link pattern not found')
-
-          old = '<div class="actions"><button onclick="loadDay()">Back</button>'
-          new = '<div class="actions"><button onclick="returnToDay()">Back</button>'
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('lesson Back pattern not found')
-
-          old = "finishActive=function(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Saving…'}if(active.completionMode==='mastery')return openMastery();api('finish',{row:active.row}).then(function(){active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active)}).catch(errorBox)}"
-          new = "finishActive=function(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Saving…'}if(active.completionMode==='mastery')return openMastery();api('finish',{row:active.row}).then(function(){clearActiveClass();active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active)}).catch(errorBox)}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('active finish override pattern not found')
-
-          old = "api('submit',{row:active.row,checkId:checkId,answers:JSON.stringify(ans)}).then(function(r){if(r.mastered){active.status='Done';"
-          new = "api('submit',{row:active.row,checkId:checkId,answers:JSON.stringify(ans)}).then(function(r){if(r.mastered){clearActiveClass();active.status='Done';"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('mastery completion pattern not found')
-
-          required = [
-              "moranSchoolActiveClass",
-              "var resume=reconcileActiveClass(d)",
-              "rememberActiveClass(a);showWork(a)",
-              "samePortal",
-              "onclick=\"saveStepDone(active,'+i+');rememberActiveClass(active)\"",
-              "returnToDay()"
-          ]
-          missing = [x for x in required if x not in s]
-          if missing:
-              raise SystemExit('Missing continuity markers: ' + ', '.join(missing))
-
-          p.write_text(s, encoding='utf-8')
-          print('Portal continuity source patch verified.')
-          PY
-      - name: Commit portal continuity patch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          if git diff --cached --quiet; then
-            echo "No portal continuity changes needed."
-          else
-            git commit -m "Preserve active class across lesson navigation"
-            git push
-          fi
+      - run: echo "Active-class continuity and same-session lesson navigation are installed; this helper is inactive."
