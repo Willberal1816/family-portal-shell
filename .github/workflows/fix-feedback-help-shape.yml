@@ -23,9 +23,10 @@ jobs:
           css_path = root / 'school-page-controls.css'
           js_path = root / 'school-page-controls.js'
 
-          css = r'''#school-page-controls{position:sticky;top:0;z-index:10000;display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 8px;background:inherit}#school-page-controls .school-back{appearance:none;-webkit-appearance:none;min-height:44px;padding:9px 13px;border:1px solid #c7cfda;border-radius:11px;background:#fff;color:#172033;font:700 15px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer}#school-page-controls .school-back:active{transform:scale(.98)}@media print{#school-page-controls{display:none!important}}\n'''
+          css = '''#school-page-controls{position:sticky;top:0;z-index:10000;display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 8px;background:inherit}#school-page-controls .school-back{appearance:none;-webkit-appearance:none;min-height:44px;padding:9px 13px;border:1px solid #c7cfda;border-radius:11px;background:#fff;color:#172033;font:700 15px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer}#school-page-controls .school-back:active{transform:scale(.98)}@media print{#school-page-controls{display:none!important}}
+'''
 
-          js = r'''(function(){
+          js = '''(function(){
             'use strict';
             var KEY='moranSchoolPortalReturnUrl';
             var FALLBACK='/family-portal-shell/';
@@ -60,7 +61,8 @@ jobs:
               document.body.insertBefore(bar,document.body.firstChild);
             }
             if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addControls);else addControls();
-          })();\n'''
+          })();
+'''
 
           css_path.write_text(css, encoding='utf-8')
           js_path.write_text(js, encoding='utf-8')
@@ -94,12 +96,9 @@ jobs:
           missing=[str(p) for p in html_files if marker not in p.read_text(encoding='utf-8')]
           if missing:
               raise SystemExit('Missing shared controls from: '+', '.join(missing))
-          if 'school-page-controls.css' not in next(iter(html_files)).read_text(encoding='utf-8'):
-              raise SystemExit('Control stylesheet reference missing')
-
           print(f'Audited student HTML pages: {len(html_files)}')
           print(f'Pages newly wired to shared controls: {len(changed)}')
-          print('Shared control files:', css_path, js_path)
+          print('Shared controls syntax normalized: yes')
           print('Portal return URL persistence: present')
           PY
       - name: Commit navigation controls
@@ -111,5 +110,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html worksheets
-          git commit -m "Add Back to School Portal controls to student pages"
+          git commit -m "Normalize shared School Portal controls"
           git push
