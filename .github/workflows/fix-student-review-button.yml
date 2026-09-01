@@ -1,5 +1,6 @@
 name: Fix student Review button
 
+# One-time self-triggered repair for the student Review button.
 on:
   push:
     paths:
