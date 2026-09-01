@@ -17,41 +17,13 @@ on:
       - '.github/workflows/validate-student-class-flow.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch student Review routing
-        if: github.event_name == 'push'
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          page = Path('index.html')
-          s = page.read_text(encoding='utf-8')
-          anchor = "function previewWork(row){var a=findAssignment(row);if(a)showWork(a)}"
-          helpers = anchor + "\n" + "function reviewPacketUrl(a){return String(advField(a,'reviewPacket','Review Packet')||advField(a,'reviewPacketUrl','Review Packet URL')||'').trim()}" + "\n" + "function showReviewFallback(a){if(!a)return;document.getElementById('app').innerHTML='<article class=\"card work\"><div class=\"lesson-kicker\">Review for '+esc(a.subject)+'</div><h2>'+esc(lessonTitle(a))+'</h2>'+reviewHtml(a)+'<div class=\"actions\"><button onclick=\"returnToDay()\">Back</button></div></article>'}" + "\n" + "function openReview(row){var a=findAssignment(row);if(!a)return;var u=reviewPacketUrl(a);if(u){window.open(u,'_blank');return}showReviewFallback(a)}"
-
-          if 'function openReview(row)' not in s:
-              if anchor not in s:
-                  raise SystemExit('Could not find previewWork anchor')
-              s = s.replace(anchor, helpers, 1)
-
-          old = "onclick=\"previewWork('+a.row+')\">View Review</button>"
-          s = s.replace(old, "onclick=\"openReview('+a.row+')\">Review</button>")
-
-          if 'View Review' in s:
-              raise SystemExit('A View Review label remains after patch')
-          if "onclick=\"openReview('+a.row+')\">Review</button>" not in s:
-              raise SystemExit('Review button was not wired to openReview')
-          if "advField(a,'reviewPacket','Review Packet')" not in s:
-              raise SystemExit('Review Packet field lookup is missing')
-
-          page.write_text(s, encoding='utf-8')
-          PY
       - name: Validate end-to-end student controls
         run: |
           python - <<'PY'
@@ -75,16 +47,10 @@ jobs:
               'worksheet student context': "u.searchParams.set('student'",
               'worksheet date context': "u.searchParams.set('date'",
               'worksheet assignment tracking': "u.searchParams.set('assignmentId'",
-              'student Review handler': "function openReview(row)",
-              'Review Packet binding': "advField(a,'reviewPacket','Review Packet')",
-              'student Review button': "onclick=\"openReview('+a.row+')\">Review</button>",
           }
           for label, marker in required_portal.items():
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
-
-          if 'View Review' in portal:
-              errors.append('Legacy View Review label remains in the student portal')
 
           if "if(active.completionMode==='mastery')return openMastery()" in portal:
               errors.append('Legacy mastery Finish gate was reintroduced')
@@ -140,19 +106,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, mastery Finish controls, Review Packet routing, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
+          print(f'Validated full class lifecycle, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
-      - name: Commit student Review repair when needed
-        if: github.event_name == 'push'
-        run: |
-          if git diff --quiet -- index.html; then
-            echo "No portal patch needed."
-            exit 0
-          fi
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add index.html
-          git commit -m "Open student Review button to daily Review Packet"
-          git push
