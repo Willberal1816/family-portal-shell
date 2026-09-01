@@ -1,37 +1,13 @@
-name: Fix mastery lesson step order
+name: Retired mastery step-order helper
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/fix-feedback-help-shape.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Remove inherited refresher from mastery classes
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          old="if(a.refresher)out.push({kind:'refresher',title:'Quick Refresher',refresher:a.refresher});"
-          new="if(a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a)))out.push({kind:'refresher',title:'Quick Refresher',refresher:a.refresher});"
-          if old not in s:
-              raise SystemExit('refresher step anchor not found')
-          s=s.replace(old,new,1)
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Commit portal patch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m "Do not prepend refreshers to mastery lessons"
-          git push
+      - run: echo "Mastery lesson step order is deployed globally; this helper is inactive."
