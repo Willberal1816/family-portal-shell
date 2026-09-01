@@ -1,4 +1,4 @@
-name: Handle unreviewed advancement stamps
+name: Fix decision-only review handling
 
 on:
   push:
@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch review and readiness handling
-        run: echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgnaW5kZXguaHRtbCcpCnM9cC5yZWFkX3RleHQoZW5jb2Rpbmc9J3V0Zi04JykKb2xkPSJmdW5jdGlvbiBoYXNSZXZpZXcoYSl7cmV0dXJuISEoYSYmKGEudGVhY2hlckZlZWRiYWNrfHxhLmZvbGxvd1VwUmVzb3VyY2V8fGEuZm9sbG93VXBTdGF0dXN8fGEucmV2aWV3ZWRBdHx8YS5yZXZpZXdSZXN1bHQpKX0iCm5ldz0iZnVuY3Rpb24gaGFzUmV2aWV3KGEpe3JldHVybiEhKGEmJihhLnRlYWNoZXJGZWVkYmFja3x8YS5mb2xsb3dVcFJlc291cmNlfHxhLmZvbGxvd1VwU3RhdHVzfHxhLnJldmlld2VkQXR8fGNsZWFuUmV2aWV3UmVzdWx0KGEucmV2aWV3UmVzdWx0KSkpfSIKaWYgb2xkIGluIHM6CiAgICBzPXMucmVwbGFjZShvbGQsbmV3LDEpCmVsaWYgbmV3IG5vdCBpbiBzOgogICAgcmFpc2UgU3lzdGVtRXhpdCgnaGFzUmV2aWV3IGNvbXBhdGliaWxpdHkgYW5jaG9yIG5vdCBmb3VuZCcpCiMgU3RvcmUgcmVhZGluZXNzIGFuZCBvcHRpb25hbCBub3RlIHdpdGggYW4gZXhwbGljaXQgc2VwYXJhdG9yLCBhdm9pZGluZyBhIEpTIGxpbmUtY29udGludWF0aW9uIGFydGlmYWN0LgpiYWQ9ImNvbWJpbmVkTm90ZT1yZWFkaW5lc3NMaW5lKyhub3RlLnRyaW0oKT8nXFxcblN0dWRlbnQgbm90ZTogJytub3RlLnRyaW0oKTonJykiCmdvb2Q9ImNvbWJpbmVkTm90ZT1yZWFkaW5lc3NMaW5lKyhub3RlLnRyaW0oKT8nIHwgU3R1ZGVudCBub3RlOiAnK25vdGUudHJpbSgpOicnKSIKaWYgYmFkIGluIHM6CiAgICBzPXMucmVwbGFjZShiYWQsZ29vZCwxKQplbGlmIGdvb2Qgbm90IGluIHM6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCdjb21iaW5lZCBub3RlIGFuY2hvciBub3QgZm91bmQnKQpwLndyaXRlX3RleHQocyxlbmNvZGluZz0ndXRmLTgnKQo=' | base64 -d > /tmp/patch_portal3.py && python /tmp/patch_portal3.py
+      - name: Patch review handling
+        run: echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgnaW5kZXguaHRtbCcpCnM9cC5yZWFkX3RleHQoZW5jb2Rpbmc9J3V0Zi04JykKb2xkPSJmdW5jdGlvbiBoYXNSZXZpZXcoYSl7cmV0dXJuISEoYSYmKGEudGVhY2hlckZlZWRiYWNrfHxhLmZvbGxvd1VwUmVzb3VyY2V8fGEuZm9sbG93VXBTdGF0dXN8fGEucmV2aWV3ZWRBdHx8YS5yZXZpZXdSZXN1bHQpKX0iCm5ldz0iZnVuY3Rpb24gaGFzUmV2aWV3KGEpe3JldHVybiEhKGEmJihhLnRlYWNoZXJGZWVkYmFja3x8YS5mb2xsb3dVcFJlc291cmNlfHxhLmZvbGxvd1VwU3RhdHVzfHxhLnJldmlld2VkQXR8fGNsZWFuUmV2aWV3UmVzdWx0KGEucmV2aWV3UmVzdWx0KSkpfSIKaWYgb2xkIGluIHM6CiAgICBzPXMucmVwbGFjZShvbGQsbmV3LDEpCmVsaWYgbmV3IG5vdCBpbiBzOgogICAgcmFpc2UgU3lzdGVtRXhpdCgnaGFzUmV2aWV3IGNvbXBhdGliaWxpdHkgYW5jaG9yIG5vdCBmb3VuZCcpCnAud3JpdGVfdGV4dChzLGVuY29kaW5nPSd1dGYtOCcpCg==' | base64 -d > /tmp/patch_portal4.py && python /tmp/patch_portal4.py
       - name: Commit portal patch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Handle unreviewed mastery decisions"
+          git commit -m "Fix decision-only review handling"
           git push
