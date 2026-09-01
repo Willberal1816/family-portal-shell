@@ -1,87 +1,13 @@
-name: One-time complete student class workflow repair
+name: Retired complete student class workflow helper
 
 on:
-  push:
-    paths:
-      - '.github/workflows/fix-feedback-help-shape.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Repair finish survey and print flow
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          old = "function finishActive(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Saving…'}if(active.completionMode==='mastery')return openMastery();api('finish',{row:active.row}).then(function(){loadDay()}).catch(errorBox)}"
-          new = "function finishActive(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Finishing…'}api('finish',{row:active.row}).then(function(){clearActiveClass();active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active)}).catch(function(e){if(btn){btn.disabled=false;btn.textContent='Finish Class'}var a=document.getElementById('helpArea');if(a)a.innerHTML='<div class=\"card error\"><b>Class was not finished.</b><p>'+esc(e&&e.message?e.message:e)+'</p><p>Your class is still open. Try Finish Class again.</p></div>';else errorBox(e)})}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('primary finishActive pattern not found')
-
-          old = "finishActive=function(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Saving…'}if(active.completionMode==='mastery')return openMastery();api('finish',{row:active.row}).then(function(){clearActiveClass();active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active)}).catch(errorBox)}"
-          new = "finishActive=function(btn){if(!active)return;if(btn){btn.disabled=true;btn.textContent='Finishing…'}api('finish',{row:active.row}).then(function(){clearActiveClass();active.status='Done';active.studentFeedbackSubmitted=false;showClassFeedback(active)}).catch(function(e){if(btn){btn.disabled=false;btn.textContent='Finish Class'}var a=document.getElementById('helpArea');if(a)a.innerHTML='<div class=\"card error\"><b>Class was not finished.</b><p>'+esc(e&&e.message?e.message:e)+'</p><p>Your class is still open. Try Finish Class again.</p></div>';else errorBox(e)})}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('final finishActive override pattern not found')
-
-          s = s.replace('<button class="finish" onclick="finishActive(this)">Finished</button>', '<button class="finish" onclick="finishActive(this)">Finish Class</button>')
-
-          old = "function printWorksheet(url){var old=document.getElementById('print-frame');if(old)old.remove();var f=document.createElement('iframe');f.id='print-frame';f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='1px';f.style.height='1px';f.style.border='0';f.style.opacity='0';f.onload=function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(url,'_blank')}};f.src=url;document.body.appendChild(f)}"
-          new = "function printWorksheet(url){if(isIOSDevice()){window.open(url,'_blank');return}var old=document.getElementById('print-frame');if(old)old.remove();var f=document.createElement('iframe');f.id='print-frame';f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='1px';f.style.height='1px';f.style.border='0';f.style.opacity='0';f.onload=function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(url,'_blank')}};f.src=url;document.body.appendChild(f)}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('printWorksheet pattern not found')
-
-          old = "else if(step.kind==='paper'){h+='<button class=\"lesson-action\" onclick=\"printWorksheet(\\''+esc(step.resource.url)+'\\')\"><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span><span class=\"print-note\">Print</span></button>'}"
-          new = "else if(step.kind==='paper'){h+='<button class=\"lesson-action\" onclick=\"saveStepDone(active,'+i+');rememberActiveClass(active);printWorksheet(\\''+esc(step.resource.url)+'\\')\"><span class=\"step-number\">'+(i+1)+'</span><span class=\"step-title\">'+esc(step.title)+'</span><span class=\"print-note\">Open / Print</span></button>'}"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('paper lesson-step pattern not found')
-
-          s = s.replace('<button onclick="loadDay()">Back to My Work</button>', '<button onclick="loadDay()">Back to School Portal</button>')
-
-          # The feedback form may be left temporarily; returning to the day must preserve a recoverable Feedback Pending state.
-          marker = '<button class="finish" onclick="submitClassFeedback(this)">Save My Feedback</button><button onclick="loadDay()">Back</button>'
-          if marker in s:
-              s = s.replace(marker, '<button class="finish" onclick="submitClassFeedback(this)">Submit Survey</button><button onclick="loadDay()">Back to School Portal</button>', 1)
-
-          required = [
-              "Finish Class",
-              "showClassFeedback(active)",
-              "Back to School Portal",
-              "saveStepDone(active,'+i+');rememberActiveClass(active);printWorksheet",
-              "if(isIOSDevice()){window.open(url,'_blank');return}",
-          ]
-          missing = [x for x in required if x not in s]
-          if missing:
-              raise SystemExit('Missing repaired flow markers: ' + ', '.join(missing))
-          if "if(active.completionMode==='mastery')return openMastery()" in s:
-              raise SystemExit('Obsolete mastery Finish gate is still present')
-
-          p.write_text(s, encoding='utf-8')
-          print('Complete student class workflow repair verified in source.')
-          PY
-      - name: Commit repaired class flow
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          if git diff --cached --quiet; then
-            echo "No class-flow changes needed."
-          else
-            git commit -m "Repair complete student class finish flow"
-            git push
-          fi
+      - run: echo "The complete student class lifecycle repair is installed. Ongoing enforcement is handled by validate-student-class-flow.yml."
