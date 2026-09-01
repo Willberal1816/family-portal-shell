@@ -1,0 +1,73 @@
+name: Apply student controls hotfix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-student-controls-hotfix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch portal lifecycle and worksheet context
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          replacements = []
+
+          old = "function rememberActiveClass(a){if(previewMode||!a)return;try{localStorage.setItem(ACTIVE_CLASS_KEY,JSON.stringify({id:String(a.id||''),row:Number(a.row||0),date:currentDate,startedAt:Date.now()}))}catch(e){}}"
+          new = "function rememberActiveClass(a){if(previewMode||!a)return;try{localStorage.setItem(ACTIVE_CLASS_KEY,JSON.stringify({id:String(a.id||''),row:Number(a.row||0),date:currentDate,student:firstName(),subject:String(a.subject||''),assignment:lessonTitle(a),startedAt:Date.now()}))}catch(e){}}"
+          replacements.append((old,new,'active class metadata'))
+
+          old = "function printWorksheet(url){if(isIOSDevice()){window.open(url,'_blank');return}var old=document.getElementById('print-frame');if(old)old.remove();var f=document.createElement('iframe');f.id='print-frame';f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='1px';f.style.height='1px';f.style.border='0';f.style.opacity='0';f.onload=function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(url,'_blank')}};f.src=url;document.body.appendChild(f)}"
+          new = "function worksheetContextUrl(url){try{var u=new URL(url,location.href),a=active||{};u.searchParams.set('student',firstName());u.searchParams.set('date',String(a.date||currentDate||''));u.searchParams.set('subject',String(a.subject||''));u.searchParams.set('assignment',lessonTitle(a));u.searchParams.set('assignmentId',String(a.id||''));return u.href}catch(e){return url}}\nfunction printWorksheet(url){url=worksheetContextUrl(url);if(isIOSDevice()){window.open(url,'_blank');return}var old=document.getElementById('print-frame');if(old)old.remove();var f=document.createElement('iframe');f.id='print-frame';f.style.position='fixed';f.style.right='0';f.style.bottom='0';f.style.width='1px';f.style.height='1px';f.style.border='0';f.style.opacity='0';f.onload=function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(url,'_blank')}};f.src=url;document.body.appendChild(f)}"
+          replacements.append((old,new,'worksheet context'))
+
+          old = "function startWork(row,btn){var a=findAssignment(row);if(!a)return;if(a.refresher){if(btn){btn.disabled=false;btn.textContent='Start'}showWork(a,0);return}if(btn){btn.disabled=true;btn.textContent='Starting…'}api('start',{row:row}).then(function(){a.status='In Progress';rememberActiveClass(a);showWork(a)}).catch(errorBox)}"
+          new = "function startWork(row,btn){var a=findAssignment(row);if(!a)return;if(a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a))){if(btn){btn.disabled=false;btn.textContent='Start'}showWork(a,0);return}if(btn){btn.disabled=true;btn.textContent='Starting…'}api('start',{row:row}).then(function(){a.status='In Progress';rememberActiveClass(a);showWork(a)}).catch(errorBox)}"
+          replacements.append((old,new,'mastery start lifecycle'))
+
+          old = "((previewMode||a.status==='Done'||a.refresher)?'':'<button class=\"finish\" onclick=\"finishActive(this)\">Finish Class</button><button class=\"help\" onclick=\"showHelpMenu()\">Need Help</button>')"
+          new = "((previewMode||a.status==='Done'||(a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a))))?'':'<button class=\"finish\" onclick=\"finishActive(this)\">Finish Class</button><button class=\"help\" onclick=\"showHelpMenu()\">Need Help</button>')"
+          replacements.append((old,new,'mastery finish lifecycle'))
+
+          for old,new,label in replacements:
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              s = s.replace(old,new,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Verify patch markers
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            "student:firstName(),subject:String(a.subject||''),assignment:lessonTitle(a)",
+            'function worksheetContextUrl(url)',
+            "u.searchParams.set('assignmentId'",
+            "if(a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a)))",
+            "a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a))",
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing hotfix markers: '+repr(missing))
+          if "previewMode||a.status==='Done'||a.refresher" in s:
+              raise SystemExit('Broad refresher Finish gate still present')
+          PY
+      - name: Commit portal hotfix
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add index.html
+          git commit -m "Fix mastery class controls and worksheet context"
+          git push
