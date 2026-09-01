@@ -106,7 +106,7 @@ function api(action,params){return new Promise(function(resolve,reject){
  s.src=backend+(backend.indexOf('?')>=0?'&':'?')+q.join('&');document.head.appendChild(s);
 })}
 function errorBox(err){document.getElementById('app').innerHTML='<div class="card error"><b>School Portal could not load.</b><p>'+esc(err&&err.message?err.message:err)+'</p><button onclick="loadDay()">Try Again</button></div>'}
-function init(){var h=location.hash.replace(/^#/,'');previewMode=/(?:^|&)preview=1(?:&|$)/.test(h);var pb=document.getElementById('previewBanner');if(pb)pb.classList.toggle('hidden',!previewMode);var m=h.match(/(?:^|&)b=([^&]+)/);if(m){try{backend=decode64u(decodeURIComponent(m[1]));localStorage.setItem('schoolPortalBackend',backend)}catch(e){}}
+function init(){try{localStorage.setItem('moranSchoolPortalReturnUrl',location.href)}catch(e){}var h=location.hash.replace(/^#/,'');previewMode=/(?:^|&)preview=1(?:&|$)/.test(h);var pb=document.getElementById('previewBanner');if(pb)pb.classList.toggle('hidden',!previewMode);var m=h.match(/(?:^|&)b=([^&]+)/);if(m){try{backend=decode64u(decodeURIComponent(m[1]));localStorage.setItem('schoolPortalBackend',backend)}catch(e){}}
  if(!backend)backend=localStorage.getItem('schoolPortalBackend')||'';currentDate=iso(new Date());
  if(!backend){document.getElementById('app').innerHTML='<div class="card error"><b>This School Portal link is incomplete.</b><p>Please open the School Portal button from the email Dad sent.</p></div>';return}loadPortalTheme();loadDay()}
 function resetTodayLocalProgress(d){if(!d||d.date!=='2026-08-30')return;(d.assignments||[]).forEach(function(a){if(a.status==='Not Started'){try{localStorage.removeItem(stepStoreKey(a))}catch(e){}}})}
