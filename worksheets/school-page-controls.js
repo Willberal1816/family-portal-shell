@@ -35,7 +35,7 @@
     var back=document.createElement('button');
     back.type='button';
     back.className='school-back';
-    back.textContent='← Back to School Portal';
+    back.textContent='← Back to This Class';
     back.addEventListener('click',returnToPortal);
     bar.appendChild(back);
     document.body.insertBefore(bar,document.body.firstChild);
