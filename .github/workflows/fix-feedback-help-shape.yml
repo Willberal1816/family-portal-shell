@@ -1,26 +1,13 @@
-name: Finish parent decision card patch
+name: Retired mastery portal patch helper
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/fix-feedback-help-shape.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  retired:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Patch final class card
-        run: echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgnaW5kZXguaHRtbCcpCnM9cC5yZWFkX3RleHQoZW5jb2Rpbmc9J3V0Zi04JykKb3JpZ2luYWw9cwpvbGQ9IjxkaXYgY2xhc3M9XCJjbGFzcy10aXRsZVwiPicrZXNjKGxlc3NvblRpdGxlKGEpKSsnPC9kaXY+PGRpdiBjbGFzcz1cImNsYXNzLWNhcmQtYWN0aW9uXCI+IgpuZXc9IjxkaXYgY2xhc3M9XCJjbGFzcy10aXRsZVwiPicrZXNjKGxlc3NvblRpdGxlKGEpKSthZHZhbmNlbWVudEh0bWwoYSkrJzwvZGl2PjxkaXYgY2xhc3M9XCJjbGFzcy1jYXJkLWFjdGlvblwiPiIKaWYgb2xkIGluIHM6CiAgICBzPXMucmVwbGFjZShvbGQsbmV3LDEpCmVsaWYgcy5jb3VudChuZXcpPDI6CiAgICByYWlzZSBTeXN0ZW1FeGl0KCdmaW5hbCBhc3NpZ25tZW50IGNhcmQgYW5jaG9yIG5vdCBmb3VuZCcpCmJhZD0iPydcXFxuU3R1ZGVudCBub3RlOiAnIgpnb29kPSI/J1xcXFxuU3R1ZGVudCBub3RlOiAnIgppZiBiYWQgaW4gczoKICAgIHM9cy5yZXBsYWNlKGJhZCxnb29kLDEpCnAud3JpdGVfdGV4dChzLGVuY29kaW5nPSd1dGYtOCcpCg==' | base64 -d > /tmp/patch_portal2.py && python /tmp/patch_portal2.py
-      - name: Commit portal patch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m "Finish parent mastery decision display"
-          git push
+      - run: echo "Mastery readiness and parent decision UI are deployed; this helper is inactive."
