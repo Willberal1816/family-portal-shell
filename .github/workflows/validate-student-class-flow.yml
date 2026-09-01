@@ -47,10 +47,18 @@ jobs:
               'worksheet student context': "u.searchParams.set('student'",
               'worksheet date context': "u.searchParams.set('date'",
               'worksheet assignment tracking': "u.searchParams.set('assignmentId'",
+              'review-only handler': "function openReview(row)",
+              'review packet binding': "advField(a,'reviewPacket','Review Packet')",
+              'review button routing': "onclick=\"openReview('+a.row+')\">Review</button>",
           }
           for label, marker in required_portal.items():
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
+
+          if 'View Review' in portal:
+              errors.append('Legacy View Review wording remains; reviewed class controls must be labeled Review')
+          if "onclick=\"previewWork('+a.row+')\">Review</button>" in portal:
+              errors.append('Review control is reopening class content instead of the authoritative Review Packet')
 
           if "if(active.completionMode==='mastery')return openMastery()" in portal:
               errors.append('Legacy mastery Finish gate was reintroduced')
@@ -106,7 +114,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
+          print(f'Validated full class lifecycle, Review Packet routing, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
