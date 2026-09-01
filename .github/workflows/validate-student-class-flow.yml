@@ -30,6 +30,7 @@ jobs:
           from pathlib import Path
 
           portal = Path('index.html').read_text(encoding='utf-8')
+          controls = Path('worksheets/school-page-controls.js').read_text(encoding='utf-8')
           errors = []
 
           required_portal = {
@@ -41,6 +42,10 @@ jobs:
               'return after feedback': "Back to School Portal",
               'iOS print fallback': "if(isIOSDevice()){window.open(url,'_blank');return}",
               'print-step persistence': "saveStepDone(active,'+i+');rememberActiveClass(active);printWorksheet",
+              'worksheet context URL': "function worksheetContextUrl(url)",
+              'worksheet student context': "u.searchParams.set('student'",
+              'worksheet date context': "u.searchParams.set('date'",
+              'worksheet assignment tracking': "u.searchParams.set('assignmentId'",
           }
           for label, marker in required_portal.items():
               if marker not in portal:
@@ -49,10 +54,34 @@ jobs:
           if "if(active.completionMode==='mastery')return openMastery()" in portal:
               errors.append('Legacy mastery Finish gate was reintroduced')
 
-          controls = Path('worksheets/school-page-controls.js').read_text(encoding='utf-8')
-          for marker in ['Back to This Class', 'history.back()', 'moranSchoolPortalReturnUrl']:
+          broad_start = "if(a.refresher){if(btn)"
+          if broad_start in portal:
+              errors.append('A refresher still blocks Start for mastery classes')
+
+          broad_finish = "previewMode||a.status==='Done'||a.refresher"
+          if broad_finish in portal:
+              errors.append('A refresher still hides Finish Class for mastery classes')
+
+          mastery_exception = "a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a))"
+          if portal.count(mastery_exception) < 3:
+              errors.append('Mastery/refresher lifecycle exception is not consistently applied to build/start/finish')
+
+          required_controls = {
+              'Back to This Class': 'Back to This Class',
+              'Back to School Portal': 'Back to School Portal',
+              'history return': 'history.back()',
+              'saved portal return': 'moranSchoolPortalReturnUrl',
+              'active assignment context': 'moranSchoolActiveClass',
+              'student-prefilled identity': '<b>Student:</b>',
+              'date-prefilled identity': '<b>Date:</b>',
+              'tracking number': 'Tracking #:',
+              'assignment-id binding': 'data-assignment-id',
+              'manual identity suppression': 'school-manual-id',
+              'per-page print tracking': 'position:fixed',
+          }
+          for label, marker in required_controls.items():
               if marker not in controls:
-                  errors.append(f'Shared lesson return control missing: {marker}')
+                  errors.append(f'Shared student-page controls missing {label}: {marker}')
 
           html_pages = sorted(Path('worksheets').rglob('*.html'))
           missing_controls = []
@@ -61,10 +90,12 @@ jobs:
               if 'school-page-controls.js' not in text:
                   missing_controls.append(str(page))
           if missing_controls:
-              errors.append('Student-facing HTML missing shared Back-to-Class controls:\n  ' + '\n  '.join(missing_controls))
+              errors.append('Student-facing HTML missing shared class/navigation controls:\n  ' + '\n  '.join(missing_controls))
 
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated portal lifecycle and Back-to-Class controls on {len(html_pages)} worksheet/lesson pages.')
+          print(f'Validated full class lifecycle, mastery Finish controls, worksheet identity/tracking, and shared navigation on {len(html_pages)} student pages.')
           PY
+      - name: Check shared controls JavaScript syntax
+        run: node --check worksheets/school-page-controls.js
