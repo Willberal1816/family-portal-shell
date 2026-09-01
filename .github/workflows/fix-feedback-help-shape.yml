@@ -1,13 +1,102 @@
-name: Retired student feedback contract repair helper
+name: Apply mastery feedback and parent decision UI
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-feedback-help-shape.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  retired:
+  patch:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Student feedback contract repair is deployed; this helper is inactive."
+      - uses: actions/checkout@v4
+      - name: Patch School Portal
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          css = '''
+.advance-decision{margin-top:7px;padding:7px 9px;border-radius:10px;border:1px solid var(--line);font-size:.82rem;line-height:1.35;background:var(--soft)}
+.advance-decision b{display:inline-block;margin-right:5px}.advance-hold{background:#fff1f1;border-color:#efb3b3}.advance-reinforce{background:#fff8dc;border-color:#e9cf78}.advance-advance{background:#eaf7ee;border-color:#9ed2ad}.advance-detail{margin-top:4px;color:var(--muted);font-weight:600}.advance-adjusted{margin-top:4px;font-weight:700}
+'''
+          if '.advance-decision{' not in s:
+              s = s.replace('</style></head>', css + '</style></head>', 1)
+
+          helpers = r'''
+function advField(a,camel,title){if(!a)return'';return a[camel]||a[title]||a[camel.charAt(0).toUpperCase()+camel.slice(1)]||''}
+function decodeAdv64(v){try{var x=String(v||'').replace(/-/g,'+').replace(/_/g,'/');while(x.length%4)x+='=';return JSON.parse(decodeURIComponent(escape(atob(x))))}catch(e){return null}}
+function advancementInfo(a){if(!a)return null;var d=advField(a,'advancementDecision','Advancement Decision'),r=advField(a,'advancementReason','Advancement Reason'),i=advField(a,'instructionAdjusted','Instruction Adjusted');if(d)return{decision:String(d),reason:String(r||''),adjusted:String(i||'')};var m=String(a.reviewResult||'').match(/\s*\[\[ADV64:([A-Za-z0-9_-]+)\]\]\s*$/);return m?decodeAdv64(m[1]):null}
+function cleanReviewResult(v){return String(v||'').replace(/\s*\[\[ADV64:[A-Za-z0-9_-]+\]\]\s*$/,'').trim()}
+function advancementHtml(a){if(!previewMode)return'';var x=advancementInfo(a);if(!x||!x.decision)return'';var d=String(x.decision),k=/hold/i.test(d)?'hold':/reinforce/i.test(d)?'reinforce':'advance',h='<div class="advance-decision advance-'+k+'"><b>'+esc(d)+'</b>';if(x.reason)h+='<div class="advance-detail">'+esc(x.reason)+'</div>';if(x.adjusted)h+='<div class="advance-adjusted">Instruction adjusted: '+esc(x.adjusted)+'</div>';return h+'</div>'}
+'''
+          if 'function advancementInfo(a)' not in s:
+              anchor = 'function hasReview(a){return!!(a&&(a.teacherFeedback||a.followUpResource||a.followUpStatus||a.reviewedAt||a.reviewResult))}'
+              if anchor not in s:
+                  raise SystemExit('hasReview anchor not found')
+              s = s.replace(anchor, helpers + '\n' + anchor, 1)
+
+          old_rr = "if(a.reviewResult)h+='<div class=\"review-row\"><b>Review Result</b><div>'+esc(a.reviewResult)+'</div></div>';"
+          new_rr = "var rr=cleanReviewResult(a.reviewResult);if(rr)h+='<div class=\"review-row\"><b>Review Result</b><div>'+esc(rr)+'</div></div>';"
+          if old_rr in s:
+              s = s.replace(old_rr, new_rr, 1)
+          elif new_rr not in s:
+              raise SystemExit('reviewResult render anchor not found')
+
+          old_title = "<div class=\"class-title\">'+esc(lessonTitle(a))+'</div><div class=\"class-card-action\">"
+          new_title = "<div class=\"class-title\">'+esc(lessonTitle(a))+advancementHtml(a)+'</div><div class=\"class-card-action\">"
+          if old_title in s:
+              s = s.replace(old_title, new_title, 1)
+          elif new_title not in s:
+              raise SystemExit('assignment card title anchor not found')
+
+          readiness = "h+='<div class=\"lesson-step\"><h3>5. Do you feel like you understand this idea well enough to move on?</h3><div class=\"muted\">Your answer helps us decide whether the next class should move forward or spend more time here.</div>'+feedbackRadio('feedbackReadiness','Yes — I understand it and I’m ready to move on','Yes — I understand it and I’m ready to move on')+feedbackRadio('feedbackReadiness','I’m not sure — I want another explanation or example','I’m not sure — I want another explanation or example')+feedbackRadio('feedbackReadiness','No — I want more teaching and practice before moving on','No — I want more teaching and practice before moving on')+'</div>';"
+          if "feedbackRadio('feedbackReadiness'" not in s:
+              q4 = re.search(r"h\+='<div class=\\\"lesson-step\\\"><h3>4\. What would help next time\?</h3>.*?\+feedbackRadio\('feedbackHelp','Nothing — this worked well','Nothing — this worked well'\)\+'</div>';", s)
+              if not q4:
+                  raise SystemExit('Q4 feedback anchor not found')
+              s = s[:q4.end()] + '\n' + readiness + s[q4.end():]
+
+          old_submit_head = "function submitClassFeedback(btn){if(!active)return;var d=document.querySelector('input[name=\"feedbackDifficulty\"]:checked'),t=document.querySelector('input[name=\"feedbackTeaching\"]:checked'),fixes=Array.from(document.querySelectorAll('input[name=\"feedbackFix\"]:checked')).map(function(x){return x.value}),help=document.querySelector('input[name=\"feedbackHelp\"]:checked'),note=(document.getElementById('feedbackNote')||{}).value||'',err=document.getElementById('feedbackError');"
+          new_submit_head = "function submitClassFeedback(btn){if(!active)return;var d=document.querySelector('input[name=\"feedbackDifficulty\"]:checked'),t=document.querySelector('input[name=\"feedbackTeaching\"]:checked'),fixes=Array.from(document.querySelectorAll('input[name=\"feedbackFix\"]:checked')).map(function(x){return x.value}),help=document.querySelector('input[name=\"feedbackHelp\"]:checked'),ready=document.querySelector('input[name=\"feedbackReadiness\"]:checked'),note=(document.getElementById('feedbackNote')||{}).value||'',err=document.getElementById('feedbackError');"
+          if old_submit_head in s:
+              s = s.replace(old_submit_head, new_submit_head, 1)
+          elif new_submit_head not in s:
+              raise SystemExit('feedback submit head anchor not found')
+
+          old_validate = "if(!d||!t||!fixes.length||!help){if(err)err.innerHTML='<div class=\"card error\"><b>Please finish the four required questions.</b></div>';return}"
+          new_validate = "if(!d||!t||!fixes.length||!help||!ready){if(err)err.innerHTML='<div class=\"card error\"><b>Please finish the five required questions.</b></div>';return}"
+          if old_validate in s:
+              s = s.replace(old_validate, new_validate, 1)
+          elif new_validate not in s:
+              raise SystemExit('feedback validation anchor not found')
+
+          old_payload = "if(btn){btn.disabled=true;btn.textContent='Saving…'}var fixValue=\"array\"==='array'?fixes:fixes.join(', '),payload={difficulty:d.value,teachingEnough:t.value,whatToFix:fixValue,whatWouldHelp:help.value,note:note.trim()};"
+          new_payload = "if(btn){btn.disabled=true;btn.textContent='Saving…'}var fixValue=\"array\"==='array'?fixes:fixes.join(', '),readinessLine='Readiness: '+ready.value,combinedNote=readinessLine+(note.trim()?'\\nStudent note: '+note.trim():''),payload={difficulty:d.value,teachingEnough:t.value,whatToFix:fixValue,whatWouldHelp:help.value,note:combinedNote};"
+          if old_payload in s:
+              s = s.replace(old_payload, new_payload, 1)
+          elif new_payload not in s:
+              raise SystemExit('feedback payload anchor not found')
+
+          if s == original:
+              raise SystemExit('No changes made')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit portal patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add mastery readiness and parent decisions"
+          git push
