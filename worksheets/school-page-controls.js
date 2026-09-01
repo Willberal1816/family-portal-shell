@@ -33,4 +33,4 @@
     document.body.insertBefore(bar,document.body.firstChild);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addControls);else addControls();
-})();\n
+})();
