@@ -1,13 +1,69 @@
-name: Retired printable restoration helper
+name: One-time teaching-work separation audit
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-feedback-help-shape.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  retired:
+  audit:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Universal student printable handling is restored and this helper is inactive."
+      - uses: actions/checkout@v4
+      - name: Normalize ordinary Learn First pages
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('worksheets/curriculum/lessons')
+          detail = re.compile(r'<details>\s*<summary>(.*?)</summary>\s*<div>(.*?)</div>\s*</details>', re.I | re.S)
+
+          def static_example(m):
+              prompt = m.group(1).strip()
+              answer = m.group(2).strip()
+              return '<div class="example"><b>Teaching example:</b> ' + prompt + '<br><b>Answer / reasoning:</b> ' + answer + '</div>'
+
+          changed = []
+          for path in sorted(root.glob('*.html')):
+              if 'mastery' in path.name:
+                  continue
+              text = path.read_text(encoding='utf-8')
+              original = text
+              while True:
+                  text, count = detail.subn(static_example, text)
+                  if count == 0:
+                      break
+              text = text.replace('<h2>Guided checks</h2>', '<h2>More worked examples</h2>')
+              text = text.replace('<h2>Guided Checks</h2>', '<h2>More worked examples</h2>')
+              text = text.replace('Before you practice', 'Before the worksheet')
+              text = text.replace('When this makes sense, return to the School Portal and open the Practice step.', 'When the teaching makes sense, return to the School Portal and open the printable Practice step. All required student work is on that worksheet.')
+              text = text.replace('When this makes sense, return to the School Portal and open the Culinary Lab Record.', 'When the teaching and setup make sense, return to the School Portal and open the printable Culinary Lab Record. All required student recording is on that sheet.')
+              if '<details>' in text.lower():
+                  raise SystemExit(f'Remaining interactive <details> in ordinary lesson page: {path}')
+              body = text.split('<body',1)[-1]
+              for forbidden in ('<input', '<textarea', 'contenteditable=', 'class="q"', 'class="answer"'):
+                  if forbidden in body.lower():
+                      raise SystemExit(f'Student-response element {forbidden} remains on Learn First page: {path}')
+              if text != original:
+                  path.write_text(text, encoding='utf-8')
+                  changed.append(str(path))
+
+          print('Normalized ordinary Learn First pages:', len(changed))
+          for p in changed:
+              print(' -', p)
+          PY
+      - name: Commit normalized lesson pages
+        run: |
+          if git diff --quiet -- worksheets/curriculum/lessons; then
+            echo "No ordinary lesson changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add worksheets/curriculum/lessons
+          git commit -m "Separate teaching pages from student work"
+          git push
