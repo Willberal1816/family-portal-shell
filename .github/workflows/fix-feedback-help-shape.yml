@@ -1,13 +1,115 @@
-name: Retired teaching-work separation helper
+name: One-time student page controls audit
 
 on:
-  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/fix-feedback-help-shape.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  retired:
+  controls:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Teaching/work separation and worksheet standards are now part of the homeschool authority; this one-time helper is inactive."
+      - uses: actions/checkout@v4
+      - name: Add shared student page controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('worksheets')
+          css_path = root / 'school-page-controls.css'
+          js_path = root / 'school-page-controls.js'
+
+          css = r'''#school-page-controls{position:sticky;top:0;z-index:10000;display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 8px;background:inherit}#school-page-controls .school-back{appearance:none;-webkit-appearance:none;min-height:44px;padding:9px 13px;border:1px solid #c7cfda;border-radius:11px;background:#fff;color:#172033;font:700 15px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer}#school-page-controls .school-back:active{transform:scale(.98)}@media print{#school-page-controls{display:none!important}}\n'''
+
+          js = r'''(function(){
+            'use strict';
+            var KEY='moranSchoolPortalReturnUrl';
+            var FALLBACK='/family-portal-shell/';
+            function savedPortal(){try{return localStorage.getItem(KEY)||''}catch(e){return ''}}
+            function returnToPortal(){
+              var saved=savedPortal();
+              try{
+                if(window.opener&&!window.opener.closed){
+                  setTimeout(function(){try{location.href=saved||FALLBACK}catch(e){}},300);
+                  window.close();
+                  return;
+                }
+              }catch(e){}
+              if(saved){location.href=saved;return}
+              try{
+                if(document.referrer&&document.referrer.indexOf('/family-portal-shell/')!==-1&&history.length>1){history.back();return}
+              }catch(e){}
+              location.href=FALLBACK;
+            }
+            function addControls(){
+              if(document.getElementById('school-page-controls'))return;
+              var bar=document.createElement('nav');
+              bar.id='school-page-controls';
+              bar.setAttribute('data-school-page-controls','');
+              bar.setAttribute('aria-label','Lesson navigation');
+              var back=document.createElement('button');
+              back.type='button';
+              back.className='school-back';
+              back.textContent='← Back to School Portal';
+              back.addEventListener('click',returnToPortal);
+              bar.appendChild(back);
+              document.body.insertBefore(bar,document.body.firstChild);
+            }
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addControls);else addControls();
+          })();\n'''
+
+          css_path.write_text(css, encoding='utf-8')
+          js_path.write_text(js, encoding='utf-8')
+
+          css_tag='<link rel="stylesheet" href="/family-portal-shell/worksheets/school-page-controls.css">'
+          js_tag='<script src="/family-portal-shell/worksheets/school-page-controls.js" defer></script>'
+          marker='school-page-controls.js'
+          changed=[]
+          html_files=sorted(root.rglob('*.html'))
+          for path in html_files:
+              text=path.read_text(encoding='utf-8')
+              if marker in text:
+                  continue
+              m=re.search(r'</head\s*>',text,re.I)
+              if not m:
+                  raise SystemExit(f'No </head> found in student page: {path}')
+              text=text[:m.start()]+css_tag+js_tag+text[m.start():]
+              path.write_text(text,encoding='utf-8')
+              changed.append(str(path))
+
+          index=Path('index.html')
+          portal=index.read_text(encoding='utf-8')
+          save="try{localStorage.setItem('moranSchoolPortalReturnUrl',location.href)}catch(e){}"
+          if save not in portal:
+              needle='function init(){'
+              if needle not in portal:
+                  raise SystemExit('Portal init() not found')
+              portal=portal.replace(needle,needle+save,1)
+              index.write_text(portal,encoding='utf-8')
+
+          missing=[str(p) for p in html_files if marker not in p.read_text(encoding='utf-8')]
+          if missing:
+              raise SystemExit('Missing shared controls from: '+', '.join(missing))
+          if 'school-page-controls.css' not in next(iter(html_files)).read_text(encoding='utf-8'):
+              raise SystemExit('Control stylesheet reference missing')
+
+          print(f'Audited student HTML pages: {len(html_files)}')
+          print(f'Pages newly wired to shared controls: {len(changed)}')
+          print('Shared control files:', css_path, js_path)
+          print('Portal return URL persistence: present')
+          PY
+      - name: Commit navigation controls
+        run: |
+          if git diff --quiet; then
+            echo "No page-control changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html worksheets
+          git commit -m "Add Back to School Portal controls to student pages"
+          git push
