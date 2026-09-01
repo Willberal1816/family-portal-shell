@@ -19,7 +19,7 @@ jobs:
           from pathlib import Path
           import re
 
-          version='20260901-3'
+          version='20260901-4'
           pages=sorted(Path('worksheets').rglob('*.html'))
           changed=[]
           missing=[]
@@ -45,7 +45,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           bad=[]
-          marker='school-page-controls.js?v=20260901-3'
+          marker='school-page-controls.js?v=20260901-4'
           for page in Path('worksheets').rglob('*.html'):
               if marker not in page.read_text(encoding='utf-8',errors='replace'):
                   bad.append(str(page))
@@ -56,5 +56,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add worksheets
-          git commit -m "Cache-bust shared student controls"
+          git commit -m "Cache-bust blank-page print safeguards"
           git push
