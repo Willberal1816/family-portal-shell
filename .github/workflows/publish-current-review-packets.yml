@@ -1,5 +1,6 @@
 name: Publish current student Review Packets
 
+# Registered one-time publisher for the current Review Packets.
 on:
   push:
     paths:
