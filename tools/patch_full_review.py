@@ -20,33 +20,63 @@ if return_old in portal:
 elif return_new not in portal:
     raise SystemExit('Could not find returnToDay marker')
 
+# Hidden SYS-REVIEW rows are transport records in the private student backend. Strip
+# them before rendering or calculating student progress and preserve their payload
+# only in memory for the current day.
+review_transport = r'''function isReviewDataRow(a){return!!(a&&/^SYS-REVIEW-/i.test(String(a.id||''))&&String(a.subject||'')==='__REVIEW_DATA__')}
+function reviewPartNumber(a){var m=String(a&&a.id||'').match(/-(\d+)$/);return m?Number(m[1]):0}
+function prepareReviewPayload(d){
+  if(!d)return d;var rows=d.assignments||[],sys=[],real=[];
+  rows.forEach(function(a){(isReviewDataRow(a)?sys:real).push(a)});
+  if(sys.length){sys.sort(function(a,b){return reviewPartNumber(a)-reviewPartNumber(b)});var manifest=null,b64='';sys.forEach(function(a){if(!manifest&&a.notes){try{manifest=JSON.parse(a.notes)}catch(e){}}b64+=String(a.teacherFeedback||'')+String(a.reviewResult||'')});d.reviewPayload={manifest:manifest,cipherB64:b64}}
+  d.assignments=real;var total=real.length,done=real.filter(function(a){return a.status==='Done'}).length,needHelp=real.filter(function(a){return a.helpOpen||a.status==='Need Help'}).length,minutes=real.reduce(function(n,a){return n+Number(a.plannedMinutes||0)},0);d.progress={total:total,done:done,needHelp:needHelp,minutes:minutes,remaining:Math.max(0,total-done)};return d
+}
+'''
+marker = "function errorBox(err){document.getElementById('app').innerHTML="
+if 'function prepareReviewPayload(d)' not in portal:
+    pos = portal.find(marker)
+    if pos < 0:
+        raise SystemExit('Could not find errorBox insertion marker')
+    portal = portal[:pos] + review_transport + portal[pos:]
+
+old_load_day = "api('data',{date:currentDate}).then(function(d){data=d;resetTodayLocalProgress(d);var resume=reconcileActiveClass(d);renderDay();if(resume)showWork(resume)}).catch(errorBox)"
+new_load_day = "api('data',{date:currentDate}).then(function(d){data=prepareReviewPayload(d);resetTodayLocalProgress(data);var resume=reconcileActiveClass(data);renderDay();if(resume)showWork(resume)}).catch(errorBox)"
+if old_load_day in portal:
+    portal = portal.replace(old_load_day, new_load_day, 1)
+elif new_load_day not in portal:
+    raise SystemExit('Could not patch day payload preparation')
+
+old_week = "api('week',{date:currentDate}).then(renderWeek).catch(errorBox)"
+new_week = "api('week',{date:currentDate}).then(function(w){if(w&&w.assignments)w.assignments=w.assignments.filter(function(a){return !isReviewDataRow(a)});renderWeek(w)}).catch(errorBox)"
+if old_week in portal:
+    portal = portal.replace(old_week, new_week, 1)
+elif new_week not in portal:
+    raise SystemExit('Could not patch week Review-row filtering')
+
 new_review = r'''var reviewObjectUrls=[];
 function clearReviewObjectUrls(){reviewObjectUrls.forEach(function(u){try{URL.revokeObjectURL(u)}catch(e){}});reviewObjectUrls=[]}
 function reviewBytesToHex(buf){return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0')}).join('')}
 function reviewB64Bytes(v){var s=atob(String(v||'')),a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a}
 async function loadEncryptedReviewPages(a){
-  var student=firstName().toLowerCase(),date=String((data&&data.date)||currentDate||''),base='review-data/'+date+'/'+student;
-  var mr=await fetch(base+'.json',{cache:'no-store'});if(!mr.ok)throw new Error('The full Review Packet is not ready for this day.');
-  var m=await mr.json();if(String(m.student)!==student||String(m.date)!==date||m.format!=='webp-pages-v1')throw new Error('The Review Packet identity did not match this school day.');
-  var br=await fetch(base+'.bin',{cache:'no-store'});if(!br.ok)throw new Error('The full Review Packet pages could not be loaded.');
-  var cipher=new Uint8Array(await br.arrayBuffer()),enc=new TextEncoder();
+  var student=firstName().toLowerCase(),date=String((data&&data.date)||currentDate||''),payload=data&&data.reviewPayload,m=payload&&payload.manifest;
+  if(!payload||!m||!payload.cipherB64)throw new Error('The full Review Packet is not ready for this day.');
+  if(String(m.student)!==student||String(m.date)!==date||m.format!=='webp-pages-v1')throw new Error('The Review Packet identity did not match this school day.');
+  var cipher=reviewB64Bytes(payload.cipherB64),enc=new TextEncoder();
+  if(Number(m.cipherBytes||0)&&cipher.length!==Number(m.cipherBytes))throw new Error('The Review Packet transfer was incomplete.');
+  if(m.cipherSha256){var ch=reviewBytesToHex(await crypto.subtle.digest('SHA-256',cipher));if(ch!==String(m.cipherSha256))throw new Error('The Review Packet transfer integrity check failed.');}
   var keyBits=await crypto.subtle.digest('SHA-256',enc.encode('moran-review-v2|'+backend+'|'+student+'|'+date));
   var key=await crypto.subtle.importKey('raw',keyBits,{name:'AES-GCM'},false,['decrypt']);
   var plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:reviewB64Bytes(m.iv),additionalData:enc.encode(m.aad)},key,cipher);
   var hash=reviewBytesToHex(await crypto.subtle.digest('SHA-256',plain));if(hash!==String(m.sha256))throw new Error('The Review Packet integrity check failed.');
   var bytes=new Uint8Array(plain),view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),hlen=view.getUint32(0,false),header=JSON.parse(new TextDecoder().decode(bytes.slice(4,4+hlen))),pos=4+hlen;
-  clearReviewObjectUrls();
-  var pages=[];(header.lengths||[]).forEach(function(len,i){len=Number(len);var part=bytes.slice(pos,pos+len);pos+=len;var u=URL.createObjectURL(new Blob([part],{type:header.mime||'image/webp'}));reviewObjectUrls.push(u);pages.push({number:i+1,url:u})});
+  clearReviewObjectUrls();var pages=[];(header.lengths||[]).forEach(function(len,i){len=Number(len);var part=bytes.slice(pos,pos+len);pos+=len;var u=URL.createObjectURL(new Blob([part],{type:header.mime||'image/webp'}));reviewObjectUrls.push(u);pages.push({number:i+1,url:u})});
   if(!pages.length||pages.length!==Number(m.pages||0))throw new Error('The Review Packet page count did not match.');return pages;
 }
 async function showClassReview(a){
   if(!a)return;active=null;clearReviewObjectUrls();
   document.getElementById('app').innerHTML='<article class="card work review-work"><div class="lesson-kicker">Full Review Packet</div><h2>'+esc(firstName())+' · '+esc((data&&data.displayDate)||currentDate)+'</h2><div class="review-loading"><b>Opening your reviewed pages…</b><p class="muted">Loading the actual student work, expected work, teacher corrections, and learning decisions.</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';
-  try{
-    var pages=await loadEncryptedReviewPages(a),html='<article class="card work review-work"><div class="lesson-kicker">Full Review Packet</div><h2>'+esc(firstName())+' · '+esc((data&&data.displayDate)||currentDate)+'</h2><p class="muted">'+pages.length+' reviewed pages. Read each subject in order with Mom or Dad.</p><div class="review-document">';
-    pages.forEach(function(p){html+='<section class="review-page"><div class="review-page-label">Page '+p.number+' of '+pages.length+'</div><img src="'+p.url+'" alt="Review Packet page '+p.number+'" loading="lazy" decoding="async"></section>'});
-    html+='</div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';document.getElementById('app').innerHTML=html;
-  }catch(err){document.getElementById('app').innerHTML='<article class="card work"><div class="lesson-kicker">Full Review Packet</div><h2>Review could not open</h2><div class="card error"><b>The full reviewed pages did not load.</b><p>'+esc(err&&err.message?err.message:err)+'</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button><button onclick="showClassReview(findAssignment('+Number(a.row)+'))">Try Again</button></div></article>'}
+  try{var pages=await loadEncryptedReviewPages(a),html='<article class="card work review-work"><div class="lesson-kicker">Full Review Packet</div><h2>'+esc(firstName())+' · '+esc((data&&data.displayDate)||currentDate)+'</h2><p class="muted">'+pages.length+' reviewed pages. Read each subject in order with Mom or Dad.</p><div class="review-document">';pages.forEach(function(p){html+='<section class="review-page"><div class="review-page-label">Page '+p.number+' of '+pages.length+'</div><img src="'+p.url+'" alt="Review Packet page '+p.number+'" loading="lazy" decoding="async"></section>'});html+='</div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';document.getElementById('app').innerHTML=html}
+  catch(err){document.getElementById('app').innerHTML='<article class="card work"><div class="lesson-kicker">Full Review Packet</div><h2>Review could not open</h2><div class="card error"><b>The full reviewed pages did not load.</b><p>'+esc(err&&err.message?err.message:err)+'</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button><button onclick="showClassReview(findAssignment('+Number(a.row)+'))">Try Again</button></div></article>'}
 }
 function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}
 '''
@@ -56,17 +86,16 @@ if 'async function loadEncryptedReviewPages(a)' not in portal:
     if count != 1:
         raise SystemExit(f'Expected one summary Review route, replaced {count}')
 
-# Update validation so CI enforces full-document Review rather than the retired summary-only route.
-workflow = workflow.replace("      - 'index.html'\n", "      - 'index.html'\n      - 'review-data/**'\n", 2) if "      - 'review-data/**'" not in workflow else workflow
-workflow = workflow.replace("              'portal-hosted class Review screen': \"function showClassReview(a)\",\n              'student Review decision': \"function studentReviewDecisionHtml(a)\",\n              'Review opens class Review screen': \"function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}\",\n", "              'encrypted full Review loader': \"async function loadEncryptedReviewPages(a)\",\n              'full Review page renderer': \"class=\\\"review-page\\\"\",\n              'private-link Review key derivation': \"moran-review-v2|\",\n              'Review opens full packet screen': \"function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}\",\n")
+# CI should enforce the private-data full-document route and reject the retired summary screen.
+workflow = workflow.replace("              'portal-hosted class Review screen': \"function showClassReview(a)\",\n              'student Review decision': \"function studentReviewDecisionHtml(a)\",\n              'Review opens class Review screen': \"function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}\",\n", "              'private Review transport filter': \"function prepareReviewPayload(d)\",\n              'encrypted full Review loader': \"async function loadEncryptedReviewPages(a)\",\n              'full Review page renderer': \"class=\\\"review-page\\\"\",\n              'private-link Review key derivation': \"moran-review-v2|\",\n              'Review opens full packet screen': \"function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}\",\n")
 legacy_check = "          if \"var u=reviewPacketUrl(a);if(u){window.open(u\" in portal or 'window.open(reviewPacketUrl' in portal:\n              errors.append('Student Review is navigating to an external Review Packet URL instead of staying inside School Portal')\n"
-extra_check = legacy_check + "          if \"reviewHtml(a)+studentReviewDecisionHtml(a)\" in portal:\n              errors.append('Summary-only Review route remains; Review must render the full corrective packet pages')\n          for student in ('emma','natalie'):\n              manifest=Path('review-data/2026-09-01')/(student+'.json'); blob=Path('review-data/2026-09-01')/(student+'.bin')\n              if not manifest.exists() or not blob.exists() or blob.stat().st_size < 100000:\n                  errors.append(f'Encrypted full Review assets missing for {student}')\n"
+extra_check = legacy_check + "          if \"reviewHtml(a)+studentReviewDecisionHtml(a)\" in portal:\n              errors.append('Summary-only Review route remains; Review must render the full corrective packet pages')\n          if \"w.assignments=w.assignments.filter(function(a){return !isReviewDataRow(a)})\" not in portal:\n              errors.append('Week View does not filter private Review transport rows')\n"
 if 'Summary-only Review route remains' not in workflow:
     if legacy_check not in workflow:
         raise SystemExit('Could not find Review validation insertion marker')
     workflow = workflow.replace(legacy_check, extra_check, 1)
-workflow = workflow.replace('portal-hosted class Review delivery', 'encrypted full Review Packet delivery')
+workflow = workflow.replace('portal-hosted class Review delivery', 'private-data encrypted full Review Packet delivery')
 
 portal_path.write_text(portal, encoding='utf-8')
 workflow_path.write_text(workflow, encoding='utf-8')
-print('Patched encrypted full Review delivery and validation.')
+print('Patched private-data encrypted full Review delivery and validation.')
