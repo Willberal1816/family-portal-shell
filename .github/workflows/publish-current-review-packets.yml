@@ -1,6 +1,5 @@
-name: Publish current student Review Packets
+name: Publish portal-hosted student class Review
 
-# Registered one-time publisher for the current Review Packets.
 on:
   push:
     paths:
@@ -14,69 +13,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Mirror current Review Packets into School Portal
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p reviews/2026-09-01/natalie reviews/2026-09-01/emma
-          curl -fL --retry 3 'https://drive.usercontent.google.com/download?id=1EH0OaqtBZq2HXJUlV7kVQ3jIxwuDtuRy&export=download&confirm=t' -o reviews/2026-09-01/natalie/review.pdf
-          curl -fL --retry 3 'https://drive.usercontent.google.com/download?id=1ZFECYd7dVW1OFCjLfFdALfXnRiNfn7BQ&export=download&confirm=t' -o reviews/2026-09-01/emma/review.pdf
-          python - <<'PY'
-          from pathlib import Path
-          for p in [Path('reviews/2026-09-01/natalie/review.pdf'),Path('reviews/2026-09-01/emma/review.pdf')]:
-              b=p.read_bytes()
-              if not b.startswith(b'%PDF-'):
-                  raise SystemExit(f'{p} is not a PDF')
-              if len(b)<100000:
-                  raise SystemExit(f'{p} is unexpectedly small: {len(b)} bytes')
-              print(p, len(b))
-          PY
-      - name: Create same-site review pages
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          tpl='''<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{name} Review Packet</title><style>body{{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f5f7fa;color:#172033}}header{{position:sticky;top:0;z-index:2;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;background:white;border-bottom:1px solid #d7dee8}}button,a{{font:inherit;border:1px solid #d7dee8;border-radius:12px;background:white;color:#172033;padding:10px 13px;text-decoration:none;font-weight:700}}h1{{font-size:1rem;margin:0 auto 0 0}}iframe{{display:block;width:100%;height:calc(100vh - 68px);border:0;background:white}}@media print{{header{{display:none}}iframe{{height:100vh}}}}</style></head><body><header><button onclick="backToPortal()">Back to School Portal</button><h1>{name} · September 1 Review Packet</h1><a href="review.pdf" target="_blank" rel="noopener">Open / Print Review</a></header><iframe src="review.pdf" title="{name} Review Packet"></iframe><script>function backToPortal(){{try{{var u=localStorage.getItem('moranSchoolPortalReturnUrl');if(u){{location.href=u;return}}}}catch(e){{}}if(history.length>1)history.back();else location.href='/family-portal-shell/'}}</script></body></html>'''
-          for slug,name in [('natalie','Natalie'),('emma','Emma')]:
-              Path(f'reviews/2026-09-01/{slug}/index.html').write_text(tpl.format(name=name),encoding='utf-8')
-          PY
-      - name: Route student Review to same-site page only
+      - name: Route Review entirely inside School Portal
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old="function reviewPacketUrl(a){return String(advField(a,'reviewPacket','Review Packet')||advField(a,'reviewPacketUrl','Review Packet URL')||'').trim()}\nfunction showReviewFallback(a){if(!a)return;document.getElementById('app').innerHTML='<article class=\"card work\"><div class=\"lesson-kicker\">Review for '+esc(a.subject)+'</div><h2>'+esc(lessonTitle(a))+'</h2>'+reviewHtml(a)+'<div class=\"actions\"><button onclick=\"returnToDay()\">Back</button></div></article>'}\nfunction openReview(row){var a=findAssignment(row);if(!a)return;var u=reviewPacketUrl(a);if(u){window.open(u,'_blank');return}showReviewFallback(a)}"
-          new="function reviewPacketUrl(a){return String(advField(a,'reviewPacket','Review Packet')||advField(a,'reviewPacketUrl','Review Packet URL')||'').trim()}\nfunction reviewPortalUrl(a){var d=String(a&&a.date||currentDate||'').trim(),n=firstName().toLowerCase();return '/family-portal-shell/reviews/'+encodeURIComponent(d)+'/'+encodeURIComponent(n)+'/index.html'}\nfunction showReviewFallback(a){if(!a)return;document.getElementById('app').innerHTML='<article class=\"card work\"><div class=\"lesson-kicker\">Review for '+esc(a.subject)+'</div><h2>'+esc(lessonTitle(a))+'</h2>'+reviewHtml(a)+'<div class=\"actions\"><button onclick=\"returnToDay()\">Back</button></div></article>'}\nfunction openReview(row){var a=findAssignment(row);if(!a)return;if(!reviewPacketUrl(a)){showReviewFallback(a);return}window.open(reviewPortalUrl(a),'_blank')}"
-          if old not in s:
-              raise SystemExit('Current Review handler block not found')
-          s=s.replace(old,new,1)
-          if "window.open(u,'_blank')" in s:
-              raise SystemExit('Legacy direct Review Packet navigation remains')
-          if 'drive.google.com' in new or 'docs.google.com' in new:
-              raise SystemExit('Google URL leaked into student Review handler')
+          old_show="function showReviewFallback(a){if(!a)return;document.getElementById('app').innerHTML='<article class=\"card work\"><div class=\"lesson-kicker\">Review for '+esc(a.subject)+'</div><h2>'+esc(lessonTitle(a))+'</h2>'+reviewHtml(a)+'<div class=\"actions\"><button onclick=\"returnToDay()\">Back</button></div></article>'}"
+          new_show="function studentReviewDecisionHtml(a){var x=advancementInfo(a);if(!x||!x.decision)return'';var d=String(x.decision),label=/hold/i.test(d)?'Keep Learning This':/reinforce/i.test(d)?'Move On + Keep Practicing':'Move On',h='<section class=\"review-panel\"><h3>Learning Decision</h3><div class=\"review-row\"><b>'+esc(label)+'</b></div>';if(x.reason)h+='<div class=\"review-row\">'+esc(x.reason)+'</div>';if(x.adjusted)h+='<div class=\"review-row\"><b>What comes next</b><div>'+esc(x.adjusted)+'</div></div>';return h+'</section>'}\nfunction showClassReview(a){if(!a)return;active=null;document.getElementById('app').innerHTML='<article class=\"card work\"><div class=\"lesson-kicker\">Class Review · '+esc(a.subject)+'</div><h2>'+esc(lessonTitle(a))+'</h2>'+reviewHtml(a)+studentReviewDecisionHtml(a)+'<div class=\"actions\"><button onclick=\"returnToDay()\">Back to School Portal</button></div></article>'}"
+          old_open="function openReview(row){var a=findAssignment(row);if(!a)return;var u=reviewPacketUrl(a);if(u){window.open(u,'_blank');return}showReviewFallback(a)}"
+          new_open="function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}"
+          if old_show not in s: raise SystemExit('Review screen anchor not found')
+          if old_open not in s: raise SystemExit('Direct Review Packet handler not found')
+          s=s.replace(old_show,new_show,1).replace(old_open,new_open,1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Validate same-site Review delivery
+      - name: Validate no Google navigation from student Review
         run: |
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          checks=[
-            "function reviewPortalUrl(a)",
-            "'/family-portal-shell/reviews/'",
-            "window.open(reviewPortalUrl(a),'_blank')",
-            ">Review</button>",
+          required=[
+            'function showClassReview(a)',
+            'function studentReviewDecisionHtml(a)',
+            'function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}',
+            'Back to School Portal',
+            '>Review</button>',
           ]
-          missing=[x for x in checks if x not in s]
-          if missing: raise SystemExit('Missing Review routing markers: '+repr(missing))
-          for path in ['reviews/2026-09-01/natalie/index.html','reviews/2026-09-01/natalie/review.pdf','reviews/2026-09-01/emma/index.html','reviews/2026-09-01/emma/review.pdf']:
-              if not Path(path).exists(): raise SystemExit('Missing '+path)
-          print('Same-site Review delivery validation passed.')
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing student Review markers: '+repr(missing))
+          if 'var u=reviewPacketUrl(a);if(u){window.open(u' in s:
+              raise SystemExit('Student Review still navigates to Review Packet URL')
+          print('Portal-hosted student class Review validation passed.')
           PY
-      - name: Commit same-site Review delivery
+      - name: Commit portal-hosted student Review
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add index.html reviews
-          git commit -m 'Serve student Review Packets from School Portal'
+          git add index.html
+          git commit -m 'Keep student class Review inside School Portal'
           git push
