@@ -47,9 +47,11 @@ jobs:
               'worksheet student context': "u.searchParams.set('student'",
               'worksheet date context': "u.searchParams.set('date'",
               'worksheet assignment tracking': "u.searchParams.set('assignmentId'",
-              'portal-hosted class Review screen': "function showClassReview(a)",
-              'student Review decision': "function studentReviewDecisionHtml(a)",
-              'Review opens class Review screen': "function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}",
+              'private Review transport filter': "function prepareReviewPayload(d)",
+              'encrypted full Review loader': "async function loadEncryptedReviewPages(a)",
+              'full Review page renderer': 'class=\"review-page\"',
+              'private-link Review key derivation': "moran-review-v2|",
+              'Review opens full packet screen': "function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}",
               'Review button routing': "onclick=\"openReview('+a.row+')\">Review</button>",
           }
           for label, marker in required_portal.items():
@@ -62,18 +64,17 @@ jobs:
               errors.append('Review control is reopening class content')
           if "var u=reviewPacketUrl(a);if(u){window.open(u" in portal or 'window.open(reviewPacketUrl' in portal:
               errors.append('Student Review is navigating to an external Review Packet URL instead of staying inside School Portal')
+          if "reviewHtml(a)+studentReviewDecisionHtml(a)" in portal:
+              errors.append('Summary-only Review route remains; Review must render the full corrective packet pages')
+          if "w.assignments=w.assignments.filter(function(a){return !isReviewDataRow(a)})" not in portal:
+              errors.append('Week View does not filter private Review transport rows')
 
           if "if(active.completionMode==='mastery')return openMastery()" in portal:
               errors.append('Legacy mastery Finish gate was reintroduced')
-
-          broad_start = "if(a.refresher){if(btn)"
-          if broad_start in portal:
+          if "if(a.refresher){if(btn)" in portal:
               errors.append('A refresher still blocks Start for mastery classes')
-
-          broad_finish = "previewMode||a.status==='Done'||a.refresher"
-          if broad_finish in portal:
+          if "previewMode||a.status==='Done'||a.refresher" in portal:
               errors.append('A refresher still hides Finish Class for mastery classes')
-
           mastery_exception = "a.refresher&&!/\\bmastery\\b/i.test(lessonTitle(a))"
           if portal.count(mastery_exception) < 3:
               errors.append('Mastery/refresher lifecycle exception is not consistently applied to build/start/finish')
@@ -117,7 +118,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, portal-hosted class Review delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
+          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
