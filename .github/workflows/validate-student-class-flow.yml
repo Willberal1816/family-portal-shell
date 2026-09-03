@@ -53,10 +53,16 @@ jobs:
               'private-link Review key derivation': "moran-review-v2|",
               'Review opens full packet screen': "function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}",
               'Review button routing': "onclick=\"openReview('+a.row+')\">Review</button>",
+              'scanner homework step': "Scan Your Homework",
           }
           for label, marker in required_portal.items():
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
+
+          if 'Turn In Your Work to Mom or Dad' in portal:
+              errors.append('Legacy parent handoff wording remains; scanner workflow is active')
+          if 'Scan Your Homework' not in portal:
+              errors.append('Scanner homework step is missing')
 
           if 'View Review' in portal:
               errors.append('Legacy View Review wording remains; reviewed class controls must be labeled Review')
