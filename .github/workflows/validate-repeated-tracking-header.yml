@@ -32,40 +32,49 @@ jobs:
           errors = []
 
           css_required = {
-              'repeated-header contract marker': 'tracking-print-header:repeated-v1',
-              'reserved print-header margin': '@page{margin-top:.68in}',
-              'shared repeated header selector': 'body .school-page-tracking',
-              'repeated paged-media positioning': 'position:fixed!important',
-              'header spans from left edge': 'left:0!important',
-              'header spans to right edge': 'right:0!important',
+              'repeated-header contract marker': 'tracking-print-header:table-repeat-v3',
+              'print table styling': '.school-print-document',
+              'repeating table header group': 'display:table-header-group!important',
+              'static Tracking header': 'position:static!important',
               'header separator': 'border-bottom:.75pt solid #777!important',
           }
           for label, marker in css_required.items():
               if marker not in css:
                   errors.append(f'Shared print CSS missing {label}: {marker}')
+          if 'table,thead,tr,svg' in css:
+              errors.append('Legacy table-row break-inside rule conflicts with repeating worksheet headers')
 
           js_required = {
-              'repeated-header contract marker': 'tracking-print-header:repeated-v1',
+              'repeated-header contract marker': 'tracking-print-header:table-repeat-v3',
+              'print-table builder': "PRINT_TABLE_ID='school-print-document'",
+              'print table preparation': 'function preparePrintDocument()',
+              'wrapper installed before printing': 'addWorksheetIdentity();preparePrintDocument();',
               'Tracking element creation': "t.id='school-page-tracking'",
               'authoritative Tracking text': "t.textContent='Tracking #: '+track",
-              'Assignment ID binding': "data-assignment-id",
-              'same repeated fixed header styling': 'position:fixed!important',
-              'same reserved print-header margin': '@page{margin-top:.68in}',
+              'Assignment ID binding': 'data-assignment-id',
+              'same repeating table header group': 'display:table-header-group!important',
           }
           for label, marker in js_required.items():
               if marker not in js:
                   errors.append(f'Shared print controls missing {label}: {marker}')
+          if 'table,thead,tr,svg' in js:
+              errors.append('Inline print safeguards still contain the legacy table-row pagination conflict')
 
           html_pages = sorted(Path('worksheets').rglob('*.html'))
           missing_controls = []
+          stale_controls = []
           for page in html_pages:
               text = page.read_text(encoding='utf-8', errors='replace')
               if 'school-page-controls.js' not in text:
                   missing_controls.append(str(page))
+              elif 'school-page-controls.js?v=20260903-7' not in text:
+                  stale_controls.append(str(page))
           if missing_controls:
               errors.append('Student pages missing shared Tracking/print controls:\n  ' + '\n  '.join(missing_controls))
+          if stale_controls:
+              errors.append('Student pages are not loading the current repeated-header controls:\n  ' + '\n  '.join(stale_controls))
 
           if errors:
               raise SystemExit('\n\n'.join(errors))
-          print(f'Validated repeated Tracking # print-header contract across {len(html_pages)} student pages.')
+          print(f'Validated repeated Tracking # table-header contract across {len(html_pages)} student pages.')
           PY
