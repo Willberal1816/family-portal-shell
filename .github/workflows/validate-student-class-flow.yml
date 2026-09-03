@@ -1,4 +1,4 @@
-name: Validate student class lifecycle
+﻿name: Validate student class lifecycle
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
           python - <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
-          import re, subprocess
+          import re
 
           portal = Path('index.html').read_text(encoding='utf-8')
           controls = Path('worksheets/school-page-controls.js').read_text(encoding='utf-8')
@@ -112,13 +112,13 @@ jobs:
                   errors.append(f'Shared print stylesheet missing {label}: {marker}')
 
           required_fraction_css = {
-              'shared fraction typography marker': 'math-fraction-typography:centerline-v1',
+              'shared fraction typography marker': 'fraction-typography:centerline-v2',
               'fraction mathematical centerline': 'vertical-align:middle!important',
               'compact numerator/denominator line height': 'line-height:.88!important',
           }
           for label, marker in required_fraction_css.items():
               if marker not in controls_css:
-                  errors.append(f'Shared Math fraction typography missing {label}: {marker}')
+                  errors.append(f'Shared fraction typography missing {label}: {marker}')
 
           html_pages = sorted(Path('worksheets').rglob('*.html'))
           missing_controls = []
@@ -149,32 +149,56 @@ jobs:
                   if not self.hidden:
                       self.parts.append(data)
 
-          try:
-              changed = subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD'], text=True).splitlines()
-          except Exception:
-              changed = []
-          changed_math_pages = []
-          for raw in changed:
-              p = Path(raw)
-              if p.suffix.lower() == '.html' and 'worksheets' in p.parts and 'math' in str(p).lower() and p.exists():
-                  changed_math_pages.append(p)
-
           slash_fraction = re.compile(r'(?<![A-Za-z0-9/])\d+\s*/\s*\d+(?!\s*/\s*\d)(?![A-Za-z0-9])')
           slash_fraction_pages = []
-          for page in changed_math_pages:
+          local_fraction_css_pages = []
+          for page in html_pages:
+              text = page.read_text(encoding='utf-8', errors='replace')
               parser = VisibleTextParser()
-              parser.feed(page.read_text(encoding='utf-8', errors='replace'))
+              parser.feed(text)
               visible = ' '.join(parser.parts)
               matches = sorted(set(slash_fraction.findall(visible)))
               if matches:
                   slash_fraction_pages.append(f'{page}: {", ".join(matches[:8])}')
+              if re.search(r'\.frac\s*\{', text):
+                  local_fraction_css_pages.append(str(page))
           if slash_fraction_pages:
-              errors.append('New or modified student-facing Math uses slash-style numeric fractions. Render numerator over denominator with a horizontal fraction bar instead:\n  ' + '\n  '.join(slash_fraction_pages))
+              errors.append('Student-facing curriculum uses slash-style numeric fractions. Render every mathematical fraction in every subject with stacked numerator/denominator notation instead:\n  ' + '\n  '.join(slash_fraction_pages))
+          if local_fraction_css_pages:
+              errors.append('Student pages must use the shared fraction typography instead of local .frac geometry that can break alignment:\n  ' + '\n  '.join(local_fraction_css_pages))
+
+          lesson_pages = sorted(Path('worksheets/curriculum/lessons').glob('*.html'))
+          lesson_quality_issues = []
+          example_signal = re.compile(r'\b(worked|example|demonstration|model|case|situation|routine|comparison)\b', re.I)
+          banned_student_framing = [
+              'prerequisite',
+              'reteaches',
+              'How this class is divided',
+              'Class plan',
+              'What this lesson teaches:',
+              'Goal:',
+              'Starting from zero:',
+              'teacher aid',
+          ]
+          for page in lesson_pages:
+              text = page.read_text(encoding='utf-8', errors='replace')
+              parser = VisibleTextParser()
+              parser.feed(text)
+              visible = ' '.join(' '.join(parser.parts).split())
+              if 'What you are learning' not in visible:
+                  lesson_quality_issues.append(f'{page}: missing child-facing What you are learning statement/section')
+              for phrase in banned_student_framing:
+                  if phrase.lower() in visible.lower():
+                      lesson_quality_issues.append(f'{page}: student-facing backend/legacy wording remains: {phrase}')
+              if not example_signal.search(visible):
+                  lesson_quality_issues.append(f'{page}: no concrete worked/example/model case detected before independent work')
+          if lesson_quality_issues:
+              errors.append('Learn First child-readability publication checks failed:\n  ' + '\n  '.join(lesson_quality_issues))
 
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, center-aligned stacked fraction typography, stacked fraction notation on {len(changed_math_pages)} changed Math pages, and shared navigation on {len(html_pages)} student pages.')
+          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
