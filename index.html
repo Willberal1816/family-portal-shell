@@ -116,7 +116,7 @@ function reviewPartNumber(a){var m=String(a&&a.id||'').match(/-(\d+)$/);return m
 function prepareReviewPayload(d){
   if(!d)return d;var rows=d.assignments||[],sys=[],real=[];
   rows.forEach(function(a){(isReviewDataRow(a)?sys:real).push(a)});
-  if(sys.length){sys.sort(function(a,b){return reviewPartNumber(a)-reviewPartNumber(b)});var manifest=null,b64='';sys.forEach(function(a){if(!manifest&&a.notes){try{manifest=JSON.parse(a.notes)}catch(e){}}b64+=String(a.teacherFeedback||'')+String(a.reviewResult||'')});d.reviewPayload={manifest:manifest,cipherB64:b64}}
+  if(sys.length){sys.sort(function(a,b){return reviewPartNumber(a)-reviewPartNumber(b)});var manifest=null,b64='';sys.forEach(function(a){if(!manifest&&a.notes){try{manifest=JSON.parse(a.notes)}catch(e){}}b64+=String(a.reviewPacket||'')+String(a.teacherFeedback||'')+String(a.reviewResult||'')});d.reviewPayload={manifest:manifest,cipherB64:b64}}
   d.assignments=real;var total=real.length,done=real.filter(function(a){return a.status==='Done'}).length,needHelp=real.filter(function(a){return a.helpOpen||a.status==='Need Help'}).length,minutes=real.reduce(function(n,a){return n+Number(a.plannedMinutes||0)},0);d.progress={total:total,done:done,needHelp:needHelp,minutes:minutes,remaining:Math.max(0,total-done)};return d
 }
 function errorBox(err){document.getElementById('app').innerHTML='<div class="card error"><b>School Portal could not load.</b><p>'+esc(err&&err.message?err.message:err)+'</p><button onclick="loadDay()">Try Again</button></div>'}
