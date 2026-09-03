@@ -27,7 +27,9 @@ jobs:
       - name: Validate end-to-end student controls
         run: |
           python - <<'PY'
+          from html.parser import HTMLParser
           from pathlib import Path
+          import re
 
           portal = Path('index.html').read_text(encoding='utf-8')
           controls = Path('worksheets/school-page-controls.js').read_text(encoding='utf-8')
@@ -121,10 +123,39 @@ jobs:
           if stale_controls:
               errors.append('Student-facing HTML is not loading the current print/control safeguards:\n  ' + '\n  '.join(stale_controls))
 
+          class VisibleTextParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.hidden = 0
+                  self.parts = []
+              def handle_starttag(self, tag, attrs):
+                  if tag in {'style','script'}:
+                      self.hidden += 1
+              def handle_endtag(self, tag):
+                  if tag in {'style','script'} and self.hidden:
+                      self.hidden -= 1
+              def handle_data(self, data):
+                  if not self.hidden:
+                      self.parts.append(data)
+
+          slash_fraction = re.compile(r'(?<![A-Za-z0-9])\d+\s*/\s*\d+(?![A-Za-z0-9])')
+          slash_fraction_pages = []
+          for page in html_pages:
+              if 'math' not in str(page).lower():
+                  continue
+              parser = VisibleTextParser()
+              parser.feed(page.read_text(encoding='utf-8', errors='replace'))
+              visible = ' '.join(parser.parts)
+              matches = sorted(set(slash_fraction.findall(visible)))
+              if matches:
+                  slash_fraction_pages.append(f'{page}: {", ".join(matches[:8])}')
+          if slash_fraction_pages:
+              errors.append('Student-facing Math uses slash-style numeric fractions. Render numerator over denominator with a horizontal fraction bar instead:\n  ' + '\n  '.join(slash_fraction_pages))
+
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, and shared navigation on {len(html_pages)} student pages.')
+          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, stacked Math fraction notation, and shared navigation on {len(html_pages)} student pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
