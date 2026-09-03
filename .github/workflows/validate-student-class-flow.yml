@@ -1,4 +1,4 @@
-﻿name: Validate student class lifecycle
+name: Validate student class lifecycle
 
 on:
   push:
@@ -173,6 +173,61 @@ jobs:
           if local_fraction_css_pages:
               errors.append('Student pages must use the shared fraction typography instead of local .frac geometry that can break alignment:\n  ' + '\n  '.join(local_fraction_css_pages))
 
+          coordinate_grid_issues = []
+          coordinate_grid_pages = []
+          def svg_attrs(raw):
+              return dict(re.findall(r'([A-Za-z_:][-A-Za-z0-9_:.]*)="([^"]*)"', raw))
+          def num_attr(attrs, key, default=None):
+              try: return float(attrs[key]) if key in attrs else default
+              except (TypeError, ValueError): return None
+          def on_grid(value, origin, step):
+              return step and abs(((value-origin)/step)-round((value-origin)/step)) < 1e-7
+          for page in html_pages:
+              text = page.read_text(encoding='utf-8', errors='replace')
+              if not re.search(r'coordinate|quadrant', str(page), re.I) and not re.search(r'coordinate plane', text, re.I):
+                  continue
+              patterns = {}
+              for m in re.finditer(r'<pattern\b([^>]*)>', text, re.I):
+                  a = svg_attrs(m.group(1))
+                  if a.get('patternUnits') != 'userSpaceOnUse' or not a.get('id'):
+                      continue
+                  if 'x' not in a or 'y' not in a:
+                      coordinate_grid_issues.append(f'{page}: userSpaceOnUse grid pattern {a.get("id")} must explicitly anchor x and y to the graph origin')
+                      continue
+                  x,y,w,h = (num_attr(a,k) for k in ('x','y','width','height'))
+                  if None in (x,y,w,h) or w <= 0 or h <= 0:
+                      coordinate_grid_issues.append(f'{page}: grid pattern {a.get("id")} has invalid numeric geometry')
+                      continue
+                  patterns[a['id']] = (x,y,w,h)
+              if not patterns:
+                  continue
+              coordinate_grid_pages.append(str(page))
+              lines=[]
+              for lm in re.finditer(r'<line\b([^>]*)>', text, re.I):
+                  a=svg_attrs(lm.group(1)); vals=[num_attr(a,k) for k in ('x1','y1','x2','y2')]
+                  if None not in vals: lines.append(vals)
+              for rm in re.finditer(r'<rect\b([^>]*)>', text, re.I):
+                  a=svg_attrs(rm.group(1)); fm=re.fullmatch(r'url\(#([^\)]+)\)',a.get('fill',''))
+                  if not fm or fm.group(1) not in patterns: continue
+                  rx,ry,rw,rh=(num_attr(a,k,0.0 if k in ('x','y') else None) for k in ('x','y','width','height'))
+                  px,py,pw,ph=patterns[fm.group(1)]
+                  if None in (rx,ry,rw,rh):
+                      coordinate_grid_issues.append(f'{page}: coordinate-grid rectangle has invalid geometry')
+                      continue
+                  if not on_grid(rx,px,pw) or not on_grid(ry,py,ph):
+                      coordinate_grid_issues.append(f'{page}: coordinate-grid rectangle is offset from its grid pattern origin')
+                  vertical=[v for v in lines if abs(v[0]-v[2])<1e-7 and min(v[1],v[3])<=ry+1e-7 and max(v[1],v[3])>=ry+rh-1e-7]
+                  horizontal=[v for v in lines if abs(v[1]-v[3])<1e-7 and min(v[0],v[2])<=rx+1e-7 and max(v[0],v[2])>=rx+rw-1e-7]
+                  if not vertical or not horizontal:
+                      coordinate_grid_issues.append(f'{page}: coordinate plane is missing full x/y axes across the plotted grid')
+                      continue
+                  if not any(on_grid(v[0],px,pw) for v in vertical):
+                      coordinate_grid_issues.append(f'{page}: y-axis falls between vertical grid lines instead of on an integer grid intersection')
+                  if not any(on_grid(v[1],py,ph) for v in horizontal):
+                      coordinate_grid_issues.append(f'{page}: x-axis falls between horizontal grid lines instead of on an integer grid intersection')
+          if coordinate_grid_issues:
+              errors.append('Coordinate-grid mathematical alignment checks failed:\n  ' + '\n  '.join(coordinate_grid_issues))
+
           lesson_pages = sorted(Path('worksheets/curriculum/lessons').glob('*.html'))
           lesson_quality_issues = []
           example_signal = re.compile(r'\b(worked|example|demonstration|model|case|situation|routine|comparison)\b', re.I)
@@ -204,7 +259,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, direct iPad/iPhone print delivery, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
+          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, direct iPad/iPhone print delivery, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, mathematically aligned coordinate grids on {len(coordinate_grid_pages)} coordinate pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
