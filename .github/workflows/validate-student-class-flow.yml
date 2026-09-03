@@ -45,7 +45,8 @@ jobs:
               'finish opens feedback': "showClassFeedback(active)",
               'feedback submission': "submitClassFeedback",
               'return after feedback': "Back to School Portal",
-              'iOS print fallback': "if(isIOSDevice()){window.open(url,'_blank');return}",
+              'iOS print intent': "pu.searchParams.set('print','1')",
+              'iOS print fallback after page load': "if(!w.__schoolAutoPrintHandled){w.focus();w.print()}",
               'print-step persistence': "saveStepDone(active,'+i+');rememberActiveClass(active);printWorksheet",
               'worksheet context URL': "function worksheetContextUrl(url)",
               'worksheet student context': "u.searchParams.set('student'",
@@ -63,6 +64,8 @@ jobs:
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
 
+          if "if(isIOSDevice()){window.open(url,'_blank');return}" in portal:
+              errors.append('Legacy iOS printable behavior only opens the worksheet instead of invoking print')
           if 'Turn In Your Work to Mom or Dad' in portal:
               errors.append('Legacy parent handoff wording remains; scanner workflow is active')
           if 'Scan Your Homework' not in portal:
@@ -98,6 +101,9 @@ jobs:
               'student-prefilled identity': '<b>Student:</b>',
               'date-prefilled identity': '<b>Date:</b>',
               'tracking number': 'Tracking #:',
+              'worksheet print button': 'Print Worksheet',
+              'worksheet auto-print intent': "param('print')!=='1'",
+              'worksheet print invocation': 'window.print()',
               'assignment-id binding': 'data-assignment-id',
               'manual identity suppression': 'school-manual-id',
               'per-page print tracking': 'position:fixed',
@@ -127,7 +133,7 @@ jobs:
               text = page.read_text(encoding='utf-8', errors='replace')
               if 'school-page-controls.js' not in text:
                   missing_controls.append(str(page))
-              elif 'school-page-controls.js?v=20260901-4' not in text:
+              elif 'school-page-controls.js?v=20260903-5' not in text:
                   stale_controls.append(str(page))
           if missing_controls:
               errors.append('Student-facing HTML missing shared class/navigation controls:\n  ' + '\n  '.join(missing_controls))
@@ -198,7 +204,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
+          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, direct iPad/iPhone print delivery, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js

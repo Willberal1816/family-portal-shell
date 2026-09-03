@@ -33,6 +33,8 @@
     location.href=savedPortal()||FALLBACK;
   }
   function backToPortal(){location.href=savedPortal()||FALLBACK}
+  function printWorksheetNow(){try{window.__schoolAutoPrintHandled=true;window.focus();window.print()}catch(e){window.__schoolAutoPrintHandled=false}}
+  function autoPrintIfRequested(){if(isTeachingPage()||param('print')!=='1')return;var run=function(){setTimeout(printWorksheetNow,200)};if(document.readyState==='complete')run();else window.addEventListener('load',run,{once:true})}
 
   function ensureStyles(){
     if(document.getElementById('school-page-controls-inline-style'))return;
@@ -52,6 +54,7 @@
     back.type='button';back.className='school-nav school-back';back.textContent='← Back to This Class';back.addEventListener('click',backToClass);bar.appendChild(back);
     var portal=document.createElement('button');
     portal.type='button';portal.className='school-nav school-portal';portal.textContent='Back to School Portal';portal.addEventListener('click',backToPortal);bar.appendChild(portal);
+    if(!isTeachingPage()){var print=document.createElement('button');print.type='button';print.className='school-nav school-print';print.textContent='Print Worksheet';print.addEventListener('click',printWorksheetNow);bar.appendChild(print)}
     document.body.insertBefore(bar,document.body.firstChild);
   }
 
@@ -89,6 +92,6 @@
   }
   function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 
-  function init(){ensureStyles();addControls();addWorksheetIdentity()}
+  function init(){ensureStyles();addControls();addWorksheetIdentity();autoPrintIfRequested()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
