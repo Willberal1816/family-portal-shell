@@ -1,0 +1,71 @@
+name: Validate repeated worksheet Tracking header
+
+on:
+  push:
+    paths:
+      - 'worksheets/**/*.html'
+      - 'worksheets/school-page-controls.js'
+      - 'worksheets/school-page-controls.css'
+      - '.github/workflows/validate-repeated-tracking-header.yml'
+  pull_request:
+    paths:
+      - 'worksheets/**/*.html'
+      - 'worksheets/school-page-controls.js'
+      - 'worksheets/school-page-controls.css'
+      - '.github/workflows/validate-repeated-tracking-header.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify every printed page carries its Tracking number
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          css = Path('worksheets/school-page-controls.css').read_text(encoding='utf-8')
+          js = Path('worksheets/school-page-controls.js').read_text(encoding='utf-8')
+          errors = []
+
+          css_required = {
+              'repeated-header contract marker': 'tracking-print-header:repeated-v1',
+              'reserved print-header margin': '@page{margin-top:.68in}',
+              'shared repeated header selector': 'body .school-page-tracking',
+              'repeated paged-media positioning': 'position:fixed!important',
+              'header spans from left edge': 'left:0!important',
+              'header spans to right edge': 'right:0!important',
+              'header separator': 'border-bottom:.75pt solid #777!important',
+          }
+          for label, marker in css_required.items():
+              if marker not in css:
+                  errors.append(f'Shared print CSS missing {label}: {marker}')
+
+          js_required = {
+              'repeated-header contract marker': 'tracking-print-header:repeated-v1',
+              'Tracking element creation': "t.id='school-page-tracking'",
+              'authoritative Tracking text': "t.textContent='Tracking #: '+track",
+              'Assignment ID binding': "data-assignment-id",
+              'same repeated fixed header styling': 'position:fixed!important',
+              'same reserved print-header margin': '@page{margin-top:.68in}',
+          }
+          for label, marker in js_required.items():
+              if marker not in js:
+                  errors.append(f'Shared print controls missing {label}: {marker}')
+
+          html_pages = sorted(Path('worksheets').rglob('*.html'))
+          missing_controls = []
+          for page in html_pages:
+              text = page.read_text(encoding='utf-8', errors='replace')
+              if 'school-page-controls.js' not in text:
+                  missing_controls.append(str(page))
+          if missing_controls:
+              errors.append('Student pages missing shared Tracking/print controls:\n  ' + '\n  '.join(missing_controls))
+
+          if errors:
+              raise SystemExit('\n\n'.join(errors))
+          print(f'Validated repeated Tracking # print-header contract across {len(html_pages)} student pages.')
+          PY
