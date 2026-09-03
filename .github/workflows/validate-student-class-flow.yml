@@ -111,6 +111,15 @@ jobs:
               if label in {'print document auto height','question pagination fallback','legacy pagination fallback'} and marker not in controls_css:
                   errors.append(f'Shared print stylesheet missing {label}: {marker}')
 
+          required_fraction_css = {
+              'shared fraction typography marker': 'math-fraction-typography:centerline-v1',
+              'fraction mathematical centerline': 'vertical-align:middle!important',
+              'compact numerator/denominator line height': 'line-height:.88!important',
+          }
+          for label, marker in required_fraction_css.items():
+              if marker not in controls_css:
+                  errors.append(f'Shared Math fraction typography missing {label}: {marker}')
+
           html_pages = sorted(Path('worksheets').rglob('*.html'))
           missing_controls = []
           stale_controls = []
@@ -165,7 +174,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, stacked fraction notation on {len(changed_math_pages)} changed Math pages, and shared navigation on {len(html_pages)} student pages.')
+          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, print pagination safeguards, center-aligned stacked fraction typography, stacked fraction notation on {len(changed_math_pages)} changed Math pages, and shared navigation on {len(html_pages)} student pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js
