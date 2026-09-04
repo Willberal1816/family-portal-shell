@@ -53,10 +53,12 @@ jobs:
               'worksheet date context': "u.searchParams.set('date'",
               'worksheet assignment tracking': "u.searchParams.set('assignmentId'",
               'private Review transport filter': "function prepareReviewPayload(d)",
-              'encrypted full Review loader': "async function loadEncryptedReviewPages(a)",
-              'full Review page renderer': 'class=\"review-page\"',
+              'encrypted Review loader': "async function loadEncryptedReviewPages(a)",
+              'class Review Assignment-ID page binding': "function reviewPagesForAssignment(a,pages,manifest)",
+              'class Review binding contract': "class-review-page-binding:v1",
+              'Review page renderer': 'class=\"review-page\"',
               'private-link Review key derivation': "moran-review-v2|",
-              'Review opens full packet screen': "function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}",
+              'Review opens selected class screen': "function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}",
               'Review button routing': "onclick=\"openReview('+a.row+')\">Review</button>",
               'scanner homework step': "Scan Your Homework",
           }
@@ -79,6 +81,10 @@ jobs:
               errors.append('Student Review is navigating to an external Review Packet URL instead of staying inside School Portal')
           if "reviewHtml(a)+studentReviewDecisionHtml(a)" in portal:
               errors.append('Summary-only Review route remains; Review must render the full corrective packet pages')
+          if "var pages=await loadEncryptedReviewPages(a),html=" in portal:
+              errors.append('Review still renders the entire daily payload without Assignment-ID page selection')
+          if "var nums=map[id]" not in portal or "pages[n-1]" not in portal:
+              errors.append('Class Review does not bind the selected Assignment ID to its mapped review pages')
           if "w.assignments=w.assignments.filter(function(a){return !isReviewDataRow(a)})" not in portal:
               errors.append('Week View does not filter private Review transport rows')
 
@@ -259,7 +265,7 @@ jobs:
           if errors:
               raise SystemExit('\n\n'.join(errors))
 
-          print(f'Validated full class lifecycle, private-data encrypted full Review Packet delivery, mastery Finish controls, worksheet identity/tracking, direct iPad/iPhone print delivery, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, mathematically aligned coordinate grids on {len(coordinate_grid_pages)} coordinate pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
+          print(f'Validated full class lifecycle, private encrypted class-specific Review delivery, mastery Finish controls, worksheet identity/tracking, direct iPad/iPhone print delivery, print pagination safeguards, universal center-aligned stacked fractions on {len(html_pages)} student pages, mathematically aligned coordinate grids on {len(coordinate_grid_pages)} coordinate pages, and child-readable Learn First structure on {len(lesson_pages)} teaching pages.')
           PY
       - name: Check shared controls JavaScript syntax
         run: node --check worksheets/school-page-controls.js

@@ -224,12 +224,20 @@ async function loadEncryptedReviewPages(a){
   clearReviewObjectUrls();var pages=[];(header.lengths||[]).forEach(function(len,i){len=Number(len);var part=bytes.slice(pos,pos+len);pos+=len;var u=URL.createObjectURL(new Blob([part],{type:header.mime||'image/webp'}));reviewObjectUrls.push(u);pages.push({number:i+1,url:u})});
   if(!pages.length||pages.length!==Number(m.pages||0))throw new Error('The Review Packet page count did not match.');return pages;
 }
-async function showClassReview(a){
-  if(!a)return;active=null;clearReviewObjectUrls();
-  document.getElementById('app').innerHTML='<article class="card work review-work"><div class="lesson-kicker">Full Review Packet</div><h2>'+esc(firstName())+' · '+esc((data&&data.displayDate)||currentDate)+'</h2><div class="review-loading"><b>Opening your reviewed pages…</b><p class="muted">Loading the actual student work, expected work, teacher corrections, and learning decisions.</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';
-  try{var pages=await loadEncryptedReviewPages(a),html='<article class="card work review-work"><div class="lesson-kicker">Full Review Packet</div><h2>'+esc(firstName())+' · '+esc((data&&data.displayDate)||currentDate)+'</h2><p class="muted">'+pages.length+' reviewed pages. Read each subject in order with Mom or Dad.</p><div class="review-document">';pages.forEach(function(p){html+='<section class="review-page"><div class="review-page-label">Page '+p.number+' of '+pages.length+'</div><img src="'+p.url+'" alt="Review Packet page '+p.number+'" loading="lazy" decoding="async"></section>'});html+='</div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';document.getElementById('app').innerHTML=html}
-  catch(err){document.getElementById('app').innerHTML='<article class="card work"><div class="lesson-kicker">Full Review Packet</div><h2>Review could not open</h2><div class="card error"><b>The full reviewed pages did not load.</b><p>'+esc(err&&err.message?err.message:err)+'</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button><button onclick="showClassReview(findAssignment('+Number(a.row)+'))">Try Again</button></div></article>'}
+function reviewPagesForAssignment(a,pages,manifest){
+  var map=manifest&&manifest.classPages,id=String(a&&a.id||'');
+  if(!map)return pages; // historical daily packets created before class binding
+  var nums=map[id];if(!Array.isArray(nums)||!nums.length)throw new Error('This class Review has not been published yet.');
+  var selected=[];nums.forEach(function(n){n=Number(n);if(!Number.isInteger(n)||n<1||n>pages.length)throw new Error('This class Review page map is invalid.');selected.push(pages[n-1])});
+  return selected;
 }
+async function showClassReview(a){
+  if(!a)return;active=null;clearReviewObjectUrls();var title=lessonTitle(a);
+  document.getElementById('app').innerHTML='<article class="card work review-work"><div class="lesson-kicker">Review</div><h2>'+esc(title)+'</h2><div class="review-loading"><b>Opening your reviewed pages…</b><p class="muted">Loading your work, teacher notes, corrections, and next step for this class.</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';
+  try{var allPages=await loadEncryptedReviewPages(a),m=data&&data.reviewPayload&&data.reviewPayload.manifest,pages=reviewPagesForAssignment(a,allPages,m),html='<article class="card work review-work"><div class="lesson-kicker">Review</div><h2>'+esc(title)+'</h2><p class="muted">'+pages.length+' reviewed page'+(pages.length===1?'':'s')+' for this class.</p><div class="review-document">';pages.forEach(function(p,i){html+='<section class="review-page"><div class="review-page-label">Page '+(i+1)+' of '+pages.length+'</div><img src="'+p.url+'" alt="Reviewed class page '+(i+1)+'" loading="lazy" decoding="async"></section>'});html+='</div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button></div></article>';document.getElementById('app').innerHTML=html}
+  catch(err){document.getElementById('app').innerHTML='<article class="card work"><div class="lesson-kicker">Review</div><h2>Review could not open</h2><div class="card error"><b>Your reviewed pages did not load.</b><p>'+esc(err&&err.message?err.message:err)+'</p></div><div class="actions"><button onclick="returnToDay()">Back to School Portal</button><button onclick="showClassReview(findAssignment('+Number(a.row)+'))">Try Again</button></div></article>'}
+}
+/* class-review-page-binding:v1 */
 function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}
 function startWork(row,btn){var a=findAssignment(row);if(!a)return;if(a.refresher&&!/\bmastery\b/i.test(lessonTitle(a))){if(btn){btn.disabled=false;btn.textContent='Start'}showWork(a,0);return}if(btn){btn.disabled=true;btn.textContent='Starting…'}api('start',{row:row}).then(function(){a.status='In Progress';rememberActiveClass(a);showWork(a)}).catch(errorBox)}
 function continueWork(row){var a=findAssignment(row);if(!a)return;rememberActiveClass(a);showWork(a)}
