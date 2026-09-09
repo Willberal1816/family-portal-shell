@@ -1,0 +1,70 @@
+name: Rolling worksheet handwriting-space repair
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/repair-horizon-writing-space.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair rolling-horizon worksheet response space
+        shell: python
+        run: |
+          from pathlib import Path
+          lined="background:repeating-linear-gradient(to bottom,#fff 0,#fff 27px,#d6dce5 28px)"
+          def rep(path, old, new):
+              p=Path(path); s=p.read_text(encoding='utf-8')
+              if old not in s: raise SystemExit(f'Expected text not found in {path}: {old[:70]}')
+              p.write_text(s.replace(old,new,1),encoding='utf-8')
+          def classic(path, base, tall, xl):
+              rep(path,'.answer{height:54px;border-bottom:1px solid #9aa5b5;margin-top:8px}.answer.tall{height:95px}.answer.xl{height:150px}',f'.answer{{min-height:{base}px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px;{lined}}}.answer.tall{{min-height:{tall}px}}.answer.xl{{min-height:{xl}px}}')
+          classic('worksheets/curriculum/natalie-math-decimal-division-1.html',78,130,320)
+          classic('worksheets/curriculum/emma-la-editing-1.html',96,150,430)
+          classic('worksheets/curriculum/natalie-la-paragraph-1.html',90,145,430)
+          classic('worksheets/curriculum/shared-social-perspective-1.html',92,150,430)
+          classic('worksheets/curriculum/natalie-math-rational-application-1.html',78,130,320)
+          classic('worksheets/curriculum/natalie-la-evidence-1.html',90,145,430)
+          classic('worksheets/curriculum/emma-la-mixed-1.html',96,150,430)
+          classic('worksheets/curriculum/natalie-la-editing-1.html',90,145,430)
+          classic('worksheets/curriculum/natalie-la-summary-1.html',90,145,360)
+
+          rep('worksheets/curriculum/emma-math-coordinate-distance-1.html','.answer{min-height:54px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px}.answer.tall{min-height:92px}',f'.answer{{min-height:82px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px;{lined}}}.answer.tall{{min-height:140px}}')
+          rep('worksheets/curriculum/emma-math-coordinate-word-1.html','.answer{min-height:54px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px}.answer.tall{min-height:92px}',f'.answer{{min-height:82px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px;{lined}}}.answer.tall{{min-height:140px}}')
+
+          rep('worksheets/curriculum/shared-science-net-force-1.html','.answer{min-height:60px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px}',f'.answer{{min-height:115px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px;{lined}}}')
+          rep('worksheets/curriculum/shared-science-net-force-1.html','td{height:44px}','td{height:72px}')
+          rep('worksheets/curriculum/shared-science-net-force-1.html','style="min-height:110px"','style="min-height:190px"')
+
+          rep('worksheets/curriculum/shared-social-context-1.html','.answer{min-height:68px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px}',f'.answer{{min-height:120px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px;{lined}}}')
+          rep('worksheets/curriculum/shared-social-context-1.html','td{height:65px}','td{height:100px}')
+
+          rep('worksheets/curriculum/shared-project-paper-bridge-1.html','.answer{min-height:60px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px}',f'.answer{{min-height:115px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px;{lined}}}')
+          rep('worksheets/curriculum/shared-project-paper-bridge-1.html','td{height:40px}','td{height:70px}')
+          rep('worksheets/curriculum/shared-project-paper-bridge-1.html','style="min-height:140px"','style="min-height:270px"')
+
+          rep('worksheets/curriculum/natalie-math-proportional-1.html','.answer{min-height:68px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px}',f'.answer{{min-height:110px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px;{lined}}}')
+          rep('worksheets/curriculum/emma-math-coordinate-patterns-1.html','.answer{min-height:62px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px}',f'.answer{{min-height:100px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px;{lined}}}')
+
+          rep('worksheets/curriculum/shared-science-friction-1.html','.answer{min-height:60px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px}',f'.answer{{min-height:115px;border:1px solid #9aa5b5;border-radius:8px;margin-top:8px;padding:6px;{lined}}}')
+          rep('worksheets/curriculum/shared-science-friction-1.html','td{height:40px}','td{height:70px}')
+          p=Path('worksheets/curriculum/shared-science-friction-1.html'); s=p.read_text(encoding='utf-8'); s=s.replace('style="min-height:105px"','style="min-height:190px"'); p.write_text(s,encoding='utf-8')
+
+          rep('worksheets/curriculum/shared-social-cause-effect-1.html','.answer{min-height:68px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px}',f'.answer{{min-height:120px;border:1px solid #8d98a6;border-radius:8px;margin-top:9px;padding:7px;{lined}}}')
+          rep('worksheets/curriculum/shared-social-cause-effect-1.html','.timeline div,.chain div{border:1px solid #777;min-height:80px;padding:7px}','.timeline div,.chain div{border:1px solid #777;min-height:110px;padding:7px}')
+          rep('worksheets/curriculum/shared-social-cause-effect-1.html','td{height:65px}','td{height:100px}')
+      - name: Validate and commit
+        run: |
+          git diff --check
+          grep -q 'min-height:430px' worksheets/curriculum/emma-la-mixed-1.html
+          grep -q 'min-height:430px' worksheets/curriculum/natalie-la-evidence-1.html
+          grep -q 'min-height:190px' worksheets/curriculum/shared-science-friction-1.html
+          grep -q 'min-height:270px' worksheets/curriculum/shared-project-paper-bridge-1.html
+          git config user.name 'Willberal1816'
+          git config user.email 'rmoran4446@mac.com'
+          git add worksheets/curriculum
+          git commit -m 'Apply handwriting-sized response space across rolling worksheets'
+          git push
