@@ -140,7 +140,7 @@ jobs:
               text = page.read_text(encoding='utf-8', errors='replace')
               if 'school-page-controls.js' not in text:
                   missing_controls.append(str(page))
-              elif 'school-page-controls.js?v=20260903-5' not in text:
+              elif 'school-page-controls.js?v=20260903-7' not in text:
                   stale_controls.append(str(page))
           if missing_controls:
               errors.append('Student-facing HTML missing shared class/navigation controls:\n  ' + '\n  '.join(missing_controls))
