@@ -1,4 +1,4 @@
-name: One-time Step 1 filter repair
+name: One-time portal consistency repair
 on:
   push:
     branches: [main]
@@ -11,29 +11,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Harden refresher attachment
+      - name: Render lunch in week view
         shell: python
         run: |
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          start=s.index('function refresherResourceIsDistinct')
-          end=s.index('function renderDay',start)
-          new='\n'.join([
-            "function refresherIsActive(x){var s=String(x&&x.status||'').trim().toLowerCase();return s==='assigned'||s==='in progress'}",
-            "function refresherResourceIsUsable(x){if(!refresherIsActive(x))return false;var u=String(x&&x.resource||'').trim();if(!u)return false;try{var q=new URL(u,location.href);return q.origin===location.origin&&q.pathname.indexOf('/family-portal-shell/')===0}catch(e){return false}}",
-            "function refresherResourceIsDistinct(a,x){if(!refresherResourceIsUsable(x))return false;var u=String(x&&x.resource||'').trim();function clean(v){return String(v||'').trim().split('#')[0].split('?')[0]}u=clean(u);var urls=[];if(a&&a.resource)urls.push(a.resource);(a&&a.resources||[]).forEach(function(r){if(r&&r.url)urls.push(r.url)});for(var i=0;i<urls.length;i++)if(clean(urls[i])===u)return false;return true}",
-            "function attachRefreshers(items,followUps){var used={};(followUps||[]).forEach(function(x){if(!refresherResourceIsUsable(x))return;for(var i=0;i<items.length;i++){var a=items[i],k=subjectKey(a.subject);if(!used[k]&&k===subjectKey(x.subject)&&refresherResourceIsDistinct(a,x)){a.refresher=x;used[k]=true;break}}});return items}"
-          ])+'\n'
+          start=s.index('function renderWeek(w){')
+          end=s.index('function advField',start)
+          old=s[start:end]
+          new=old.replace("var key=iso(d),dayItems=sortSchedule(collapseSharedClasses(items.filter(function(a){return a.date===key}),firstName()));", "var key=iso(d),dayItems=sortSchedule(collapseSharedClasses(items.filter(function(a){return a.date===key}),firstName())),dayBlocks=scheduleWithBreak(dayItems);")
+          new=new.replace("dayItems.forEach(function(a){h+='<div class=\\\"week-class\\\"><b>'+esc(a.time&&String(a.time).toLowerCase()!=='flexible'?a.time+' · ':'')+esc(a.subject)+'</b><div>'+esc(lessonTitle(a))+'</div><div class=\\\"meta\\\">'+esc(a.status)+'</div></div>'});", "dayBlocks.forEach(function(a){if(a.scheduleBreak){h+='<div class=\\\"week-class\\\"><b>'+esc(breakTimeLabel())+' · Lunch / Break</b><div class=\\\"muted\\\">Eat, rest, or move around. No school work right now.</div></div>'}else{h+='<div class=\\\"week-class\\\"><b>'+esc(a.time&&String(a.time).toLowerCase()!=='flexible'?a.time+' · ':'')+esc(a.subject)+'</b><div>'+esc(lessonTitle(a))+'</div><div class=\\\"meta\\\">'+esc(a.status)+'</div></div>'}});")
+          if new==old:
+              raise SystemExit('Week-view lunch patch did not match; refusing unsafe write')
           p.write_text(s[:start]+new+s[end:],encoding='utf-8')
       - name: Validate and commit
         run: |
           git diff --check
+          grep -q 'dayBlocks=scheduleWithBreak(dayItems)' index.html
+          grep -q 'Lunch / Break' index.html
           grep -q "s==='assigned'||s==='in progress'" index.html
-          grep -q "q.origin===location.origin" index.html
-          grep -q "if(!refresherResourceIsUsable(x))return" index.html
           git config user.name 'Willberal1816'
           git config user.email 'rmoran4446@mac.com'
           git add index.html
-          git commit -m 'Reject stale and unusable Step 1 refreshers'
+          git commit -m 'Show calculated lunch in weekly school view'
           git push
