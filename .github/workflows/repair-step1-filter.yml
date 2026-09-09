@@ -17,11 +17,15 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old=("function refresherResourceIsDistinct(a,x){var u=String(x&&x.resource||'').trim();if(!u)return false;function clean(v){return String(v||'').trim().split('#')[0].split('?')[0]}u=clean(u);var urls=[];if(a&&a.resource)urls.push(a.resource);(a&&a.resources||[]).forEach(function(r){if(r&&r.url)urls.push(r.url)});for(var i=0;i<urls.length;i++)if(clean(urls[i])===u)return false;return true}\\n" + "function attachRefreshers(items,followUps){var used={};(followUps||[]).forEach(function(x){for(var i=0;i<items.length;i++){var a=items[i],k=subjectKey(a.subject);if(!used[k]&&k===subjectKey(x.subject)&&refresherResourceIsDistinct(a,x)){a.refresher=x;used[k]=true;break}}});return items}")
-          new=("function refresherIsActive(x){var s=String(x&&x.status||'').trim().toLowerCase();return s==='assigned'||s==='in progress'}\\n" + "function refresherResourceIsUsable(x){if(!refresherIsActive(x))return false;var u=String(x&&x.resource||'').trim();if(!u)return false;try{var q=new URL(u,location.href);return q.origin===location.origin&&q.pathname.indexOf('/family-portal-shell/')===0}catch(e){return false}}\\n" + "function refresherResourceIsDistinct(a,x){if(!refresherResourceIsUsable(x))return false;var u=String(x&&x.resource||'').trim();function clean(v){return String(v||'').trim().split('#')[0].split('?')[0]}u=clean(u);var urls=[];if(a&&a.resource)urls.push(a.resource);(a&&a.resources||[]).forEach(function(r){if(r&&r.url)urls.push(r.url)});for(var i=0;i<urls.length;i++)if(clean(urls[i])===u)return false;return true}\\n" + "function attachRefreshers(items,followUps){var used={};(followUps||[]).forEach(function(x){if(!refresherResourceIsUsable(x))return;for(var i=0;i<items.length;i++){var a=items[i],k=subjectKey(a.subject);if(!used[k]&&k===subjectKey(x.subject)&&refresherResourceIsDistinct(a,x)){a.refresher=x;used[k]=true;break}}});return items}")
-          if old not in s:
-              raise SystemExit('Expected refresher block not found; refusing unsafe patch')
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          start=s.index('function refresherResourceIsDistinct')
+          end=s.index('function renderDay',start)
+          new='\n'.join([
+            "function refresherIsActive(x){var s=String(x&&x.status||'').trim().toLowerCase();return s==='assigned'||s==='in progress'}",
+            "function refresherResourceIsUsable(x){if(!refresherIsActive(x))return false;var u=String(x&&x.resource||'').trim();if(!u)return false;try{var q=new URL(u,location.href);return q.origin===location.origin&&q.pathname.indexOf('/family-portal-shell/')===0}catch(e){return false}}",
+            "function refresherResourceIsDistinct(a,x){if(!refresherResourceIsUsable(x))return false;var u=String(x&&x.resource||'').trim();function clean(v){return String(v||'').trim().split('#')[0].split('?')[0]}u=clean(u);var urls=[];if(a&&a.resource)urls.push(a.resource);(a&&a.resources||[]).forEach(function(r){if(r&&r.url)urls.push(r.url)});for(var i=0;i<urls.length;i++)if(clean(urls[i])===u)return false;return true}",
+            "function attachRefreshers(items,followUps){var used={};(followUps||[]).forEach(function(x){if(!refresherResourceIsUsable(x))return;for(var i=0;i<items.length;i++){var a=items[i],k=subjectKey(a.subject);if(!used[k]&&k===subjectKey(x.subject)&&refresherResourceIsDistinct(a,x)){a.refresher=x;used[k]=true;break}}});return items}"
+          ])+'\n'
+          p.write_text(s[:start]+new+s[end:],encoding='utf-8')
       - name: Validate and commit
         run: |
           git diff --check
