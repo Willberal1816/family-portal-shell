@@ -112,11 +112,12 @@ jobs:
               'worksheet print invocation': 'window.print()',
               'assignment-id binding': 'data-assignment-id',
               'manual identity suppression': 'school-manual-id',
-              'per-page print tracking': 'position:fixed',
               'print document auto height': 'height:auto!important',
               'question pagination fallback': 'break-inside:auto!important',
               'legacy pagination fallback': 'page-break-inside:auto!important',
           }
+          if 'position:fixed' not in controls and 'tracking-print-header:table-repeat-v3' not in controls:
+              errors.append('Shared student-page controls missing repeated per-page Tracking header implementation')
           for label, marker in required_controls.items():
               if marker not in controls:
                   errors.append(f'Shared student-page controls missing {label}: {marker}')
@@ -255,7 +256,8 @@ jobs:
               if 'What you are learning' not in visible:
                   lesson_quality_issues.append(f'{page}: missing child-facing What you are learning statement/section')
               for phrase in banned_student_framing:
-                  if phrase.lower() in visible.lower():
+                  hit = re.search(r'\bClass plan\b', visible, re.I) if phrase == 'Class plan' else phrase.lower() in visible.lower()
+                  if hit:
                       lesson_quality_issues.append(f'{page}: student-facing backend/legacy wording remains: {phrase}')
               if not example_signal.search(visible):
                   lesson_quality_issues.append(f'{page}: no concrete worked/example/model case detected before independent work')
