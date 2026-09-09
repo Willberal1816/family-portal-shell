@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Render lunch in week view
+      - name: Fix weekly lunch loop syntax
         shell: python
         run: |
           from pathlib import Path
@@ -20,22 +20,33 @@ jobs:
           start=s.index('function renderWeek(w){')
           end=s.index('function advField',start)
           block=s[start:end]
-          if 'dayBlocks=scheduleWithBreak(dayItems)' not in block:
-              raise SystemExit('Expected dayBlocks calculation missing')
-          loop_start=block.index('dayItems.forEach(function(a){')
-          loop_end=block.index(");h+='</section>'",loop_start)+2
-          replacement="dayBlocks.forEach(function(a){if(a.scheduleBreak){h+='<div class=\"week-class\"><b>'+esc(breakTimeLabel())+' · Lunch / Break</b><div class=\"muted\">Eat, rest, or move around. No school work right now.</div></div>'}else{h+='<div class=\"week-class\"><b>'+esc(a.time&&String(a.time).toLowerCase()!=='flexible'?a.time+' · ':'')+esc(a.subject)+'</b><div>'+esc(lessonTitle(a))+'</div><div class=\"meta\">'+esc(a.status)+'</div></div>'}})"
-          block=block[:loop_start]+replacement+block[loop_end:]
+          bad="}})h+='</section>'"
+          good="}});h+='</section>'"
+          if bad not in block:
+              raise SystemExit('Expected missing-semicolon pattern not found; refusing unsafe write')
+          block=block.replace(bad,good,1)
           p.write_text(s[:start]+block+s[end:],encoding='utf-8')
-      - name: Validate and commit
+      - name: Validate JavaScript and commit
+        shell: bash
         run: |
           git diff --check
           grep -q 'dayBlocks=scheduleWithBreak(dayItems)' index.html
           grep -q 'dayBlocks.forEach(function(a){if(a.scheduleBreak)' index.html
           grep -q "s==='assigned'||s==='in progress'" index.html
           if grep -q 'dayItems.forEach(function(a)' index.html; then echo 'stale week loop remains'; exit 1; fi
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text(encoding='utf-8')
+          scripts=[]
+          for attrs,body in re.findall(r'<script([^>]*)>(.*?)</script>',html,re.I|re.S):
+              if 'src=' not in attrs.lower(): scripts.append(body)
+          if not scripts: raise SystemExit('No inline portal JavaScript found')
+          Path('/tmp/portal-inline.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/portal-inline.js
           git config user.name 'Willberal1816'
           git config user.email 'rmoran4446@mac.com'
           git add index.html
-          git commit -m 'Render lunch cards in weekly school view'
+          git commit -m 'Fix weekly lunch rendering syntax'
           git push
