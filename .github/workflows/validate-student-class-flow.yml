@@ -61,10 +61,21 @@ jobs:
               'Review opens selected class screen': "function openReview(row){var a=findAssignment(row);if(a)showClassReview(a)}",
               'Review button routing': "onclick=\"openReview('+a.row+')\">Review</button>",
               'scanner homework step': "Scan Your Homework",
+              'Khan resource recognition': "function isKhanResource(r)",
+              'Khan activity step kind': "kind:'khan'",
+              'Khan controlled launch': "function openKhanStep(idx,url)",
+              'Khan explicit completion': "I Finished This Khan Step",
           }
           for label, marker in required_portal.items():
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
+
+          if "function openKhanStep(idx,url)" in portal:
+              khan_open = portal.split("function openKhanStep(idx,url)",1)[1].split('\nfunction ',1)[0]
+              if 'saveStepDone' in khan_open:
+                  errors.append('Opening a Khan activity must not mark the lesson step complete')
+          if "step.kind==='khan'" not in portal or 'Opening the Khan page does not mark this step finished.' not in portal:
+              errors.append('Khan activities must remain incomplete until the student explicitly finishes the step')
 
           if "if(isIOSDevice()){window.open(url,'_blank');return}" in portal:
               errors.append('Legacy iOS printable behavior only opens the worksheet instead of invoking print')
