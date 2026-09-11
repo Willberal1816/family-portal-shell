@@ -96,8 +96,10 @@ jobs:
               errors.append('Review still renders the entire daily payload without Assignment-ID page selection')
           if "var nums=map[id]" not in portal or "pages[n-1]" not in portal:
               errors.append('Class Review does not bind the selected Assignment ID to its mapped review pages')
-          if "w.assignments=w.assignments.filter(function(a){return !isReviewDataRow(a)})" not in portal:
-              errors.append('Week View does not filter private Review transport rows')
+          if "d.assignments=real.filter(function(a){return !assignmentIsBlocked(a)})" not in portal:
+              errors.append('Day View does not exclude Deferred/blocked assignment rows')
+          if "w.assignments=w.assignments.filter(function(a){return !isReviewDataRow(a)&&!assignmentIsBlocked(a)})" not in portal:
+              errors.append('Week View does not exclude private Review transport or Deferred/blocked assignment rows')
 
           if "if(active.completionMode==='mastery')return openMastery()" in portal:
               errors.append('Legacy mastery Finish gate was reintroduced')
