@@ -1,0 +1,33 @@
+name: Moran School Trigger Bridge
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: Create a TEST notification only
+        required: false
+        default: 'true'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create external trigger notification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TEST_MODE: ${{ inputs.test_mode }}
+        shell: bash
+        run: |
+          stamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          if [ "$TEST_MODE" = "true" ]; then
+            title="[MORAN SCHOOL TRIGGER TEST] GitHub bridge $stamp"
+          else
+            title="[MORAN SCHOOL TRIGGER] GitHub bridge $stamp"
+          fi
+          body="@Willberal1816 External Moran School trigger delivery. Timestamp: $stamp"
+          gh api --method POST "repos/$REPO/issues" -f title="$title" -f body="$body" -F 'assignees[]=Willberal1816'
