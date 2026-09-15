@@ -22,12 +22,12 @@ jobs:
     steps:
       - name: Deliver Moran School trigger
         env:
-          USER_TOKEN: ${{ secrets.GH_PAT }}
-          DEFAULT_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           RUN_ID: ${{ github.run_id }}
+          ANCHOR_COMMENT_ID: '5686617452'
         shell: bash
         run: |
           local_date="$(TZ=America/Chicago date +'%Y-%m-%d')"
@@ -40,7 +40,7 @@ jobs:
           fi
 
           if [ "$EVENT_NAME" = "push" ]; then
-            phase="BOOTSTRAP_USER_AUTH_VERIFY"
+            phase="ANCHOR_EDIT_VERIFY"
           else
             case "$EVENT_SCHEDULE" in
               "17,37,57 15-23 * * *") phase="RETRY" ;;
@@ -48,16 +48,8 @@ jobs:
             esac
           fi
 
-          if [ -n "$USER_TOKEN" ]; then
-            export GH_TOKEN="$USER_TOKEN"
-            auth_mode="user-secret"
-          else
-            export GH_TOKEN="$DEFAULT_TOKEN"
-            auth_mode="default-bot"
-          fi
-
           stamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. Read and follow the CURRENT live Home Schooling Master Index and run the complete rolling Homeschool Daytime Review & Closeout workflow for all work eligible at this pass. Process each completed class immediately, publish its student Review as soon as reviewed, and preserve Assignment IDs and runtime state."
 
-          gh api --method POST "repos/$REPO/issues/4/comments" -f body="$body" >/dev/null
-          echo "Posted Moran trigger comment auth_mode=$auth_mode"
+          gh api --method PATCH "repos/$REPO/issues/comments/$ANCHOR_COMMENT_ID" -f body="$body" >/dev/null
+          echo "Updated persistent Moran user anchor comment."
