@@ -1,0 +1,45 @@
+name: Moran School Trigger Bridge
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7,27,47 15-23 * * *'
+    - cron: '17,37,57 15-23 * * *'
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build trigger payload
+        id: payload
+        shell: bash
+        run: |
+          local_date="$(TZ=America/Chicago date +'%Y-%m-%d')"
+          local_hour="$(TZ=America/Chicago date +'%H')"
+          local_minute="$(TZ=America/Chicago date +'%M')"
+          if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 17 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "${{ github.event.schedule }}" in
+            "17,37,57 15-23 * * *") phase="RETRY" ;;
+            *) phase="PRIMARY" ;;
+          esac
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "body=MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=${{ github.run_id }}. Read and follow the CURRENT live Home Schooling Master Index and run the complete rolling Homeschool Daytime Review & Closeout workflow for all work eligible at this pass. Process each completed class immediately and preserve Assignment IDs and runtime state." >> "$GITHUB_OUTPUT"
+
+      - name: Post trigger comment
+        if: steps.payload.outputs.skip != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 4,
+              body: '${{ steps.payload.outputs.body }}'
+            })
