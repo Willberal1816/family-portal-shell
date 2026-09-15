@@ -20,8 +20,7 @@ on:
           - PRIMARY
           - RETRY
   schedule:
-    - cron: '7,27,47 15-23 * * *'
-    - cron: '17,37,57 15-23 * * *'
+    - cron: '7-57/10 * * * *'
 
 permissions:
   contents: read
@@ -37,7 +36,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
           INPUT_MODE: ${{ inputs.mode }}
           INPUT_PHASE: ${{ inputs.phase }}
           RUN_ID: ${{ github.run_id }}
@@ -53,8 +51,8 @@ jobs:
               exit 0
             fi
             mode="live"
-            case "$EVENT_SCHEDULE" in
-              "17,37,57 15-23 * * *") phase="RETRY" ;;
+            case "$local_minute" in
+              17|37|57) phase="RETRY" ;;
               *) phase="PRIMARY" ;;
             esac
           else
