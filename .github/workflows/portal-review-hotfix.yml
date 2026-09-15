@@ -1,0 +1,53 @@
+name: One-time student portal review-row hotfix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/portal-review-hotfix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch student portal guards
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = "function isReviewDataRow(a){return!!(a&&/^SYS-REVIEW-/i.test(String(a.id||''))&&String(a.subject||'')==='__REVIEW_DATA__')}"
+          new = "function isReviewDataRow(a){if(!a)return false;var id=String(a.id||a.assignmentId||'');return String(a.subject||'')==='__REVIEW_DATA__'||/^SYS-REVIEW-/i.test(id)}"
+          if old not in s:
+              raise SystemExit('Expected isReviewDataRow implementation not found')
+          s = s.replace(old, new, 1)
+
+          old = "function reviewPartNumber(a){var m=String(a&&a.id||'').match(/-(\\d+)$/);return m?Number(m[1]):0}"
+          new = "function reviewPartNumber(a){var id=String(a&&(a.id||a.assignmentId)||'');var m=id.match(/-(\\d+)$/);return m?Number(m[1]):0}"
+          if old not in s:
+              raise SystemExit('Expected reviewPartNumber implementation not found')
+          s = s.replace(old, new, 1)
+
+          old = "function resetTodayLocalProgress(d){if(!d||d.date!=='2026-08-30')return;"
+          new = "function resetTodayLocalProgress(d){if(!d)return;"
+          if old not in s:
+              raise SystemExit('Expected resetTodayLocalProgress guard not found')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/portal-review-hotfix.yml
+          git commit -m "Fix student portal review-row filtering and lesson reset"
+          git push origin HEAD:main
