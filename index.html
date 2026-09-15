@@ -113,8 +113,8 @@ function api(action,params){return new Promise(function(resolve,reject){
  s.onerror=function(){delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);reject(new Error('Could not reach the School Portal.'))};
  s.src=backend+(backend.indexOf('?')>=0?'&':'?')+q.join('&');document.head.appendChild(s);
 })}
-function isReviewDataRow(a){return!!(a&&/^SYS-REVIEW-/i.test(String(a.id||''))&&String(a.subject||'')==='__REVIEW_DATA__')}
-function reviewPartNumber(a){var m=String(a&&a.id||'').match(/-(\d+)$/);return m?Number(m[1]):0}
+function isReviewDataRow(a){if(!a)return false;var id=String(a.id||a.assignmentId||'');return String(a.subject||'')==='__REVIEW_DATA__'||/^SYS-REVIEW-/i.test(id)}
+function reviewPartNumber(a){var id=String(a&&(a.id||a.assignmentId)||'');var m=id.match(/-(\d+)$/);return m?Number(m[1]):0}
 function prepareReviewPayload(d){
   if(!d)return d;var rows=d.assignments||[],sys=[],real=[];
   rows.forEach(function(a){(isReviewDataRow(a)?sys:real).push(a)});
@@ -125,7 +125,7 @@ function errorBox(err){document.getElementById('app').innerHTML='<div class="car
 function init(){try{localStorage.setItem('moranSchoolPortalReturnUrl',location.href)}catch(e){}var h=location.hash.replace(/^#/,'');previewMode=/(?:^|&)preview=1(?:&|$)/.test(h);var pb=document.getElementById('previewBanner');if(pb)pb.classList.toggle('hidden',!previewMode);var m=h.match(/(?:^|&)b=([^&]+)/);if(m){try{backend=decode64u(decodeURIComponent(m[1]));localStorage.setItem('schoolPortalBackend',backend)}catch(e){}}
  if(!backend)backend=localStorage.getItem('schoolPortalBackend')||'';currentDate=iso(new Date());
  if(!backend){document.getElementById('app').innerHTML='<div class="card error"><b>This School Portal link is incomplete.</b><p>Please open the School Portal button from the email Dad sent.</p></div>';return}loadPortalTheme();loadDay()}
-function resetTodayLocalProgress(d){if(!d||d.date!=='2026-08-30')return;(d.assignments||[]).forEach(function(a){if(a.status==='Not Started'){try{localStorage.removeItem(stepStoreKey(a))}catch(e){}}})}
+function resetTodayLocalProgress(d){if(!d)return;(d.assignments||[]).forEach(function(a){if(a.status==='Not Started'){try{localStorage.removeItem(stepStoreKey(a))}catch(e){}}})}
 function loadDay(){stopClock();stopFollowUpTimers();active=null;updateDateNav();document.body.className='';document.getElementById('app').innerHTML='<div class="card empty">Opening school day…</div>';api('data',{date:currentDate}).then(function(d){data=prepareReviewPayload(d);resetTodayLocalProgress(data);var resume=reconcileActiveClass(data);renderDay();if(resume)showWork(resume)}).catch(errorBox)}
 function shiftDay(n){var d=new Date(currentDate+'T12:00:00');d.setDate(d.getDate()+n*(mode==='week'?7:1));currentDate=iso(d);if(mode==='week')loadWeek();else loadDay()}
 function today(){currentDate=iso(new Date());setModeButton();if(mode==='week')loadWeek();else loadDay()}
