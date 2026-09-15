@@ -20,8 +20,8 @@ on:
           - PRIMARY
           - RETRY
   schedule:
-    - cron: '5 15-23 * * *'
-    - cron: '35 15-23 * * *'
+    - cron: '7,27,47 15-23 * * *'
+    - cron: '17,37,57 15-23 * * *'
 
 permissions:
   contents: read
@@ -45,6 +45,7 @@ jobs:
         run: |
           local_date="$(TZ=America/Chicago date +'%Y-%m-%d')"
           local_hour="$(TZ=America/Chicago date +'%H')"
+          local_minute="$(TZ=America/Chicago date +'%M')"
 
           if [ "$EVENT_NAME" = "schedule" ]; then
             if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 17 ]; then
@@ -53,7 +54,7 @@ jobs:
             fi
             mode="live"
             case "$EVENT_SCHEDULE" in
-              35*) phase="RETRY" ;;
+              "17,37,57 15-23 * * *") phase="RETRY" ;;
               *) phase="PRIMARY" ;;
             esac
           else
@@ -67,8 +68,8 @@ jobs:
             body="@Willberal1816 MORAN SCHOOL TRIGGER TEST only. timestamp=$stamp phase=$phase github_run_id=$RUN_ID. Work must ignore this TEST trigger."
           else
             target=4
-            body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date hour=$local_hour phase=$phase github_run_id=$RUN_ID timestamp=$stamp. Read and follow the CURRENT live Home Schooling Master Index and run the complete Homeschool Daytime Review & Closeout workflow for all work eligible at this pass. Image-only scans are normal evidence. Preserve Assignment IDs and runtime state."
+            body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. Read and follow the CURRENT live Home Schooling Master Index and run the complete rolling Homeschool Daytime Review & Closeout workflow for all work eligible at this pass. Process each completed class immediately, publish its student Review as soon as it is reviewed, and reserve combined parent-packet assembly for the authority-defined closeout pass. Image-only scans are normal evidence. Preserve Assignment IDs and runtime state."
           fi
 
           gh api --method POST "repos/$REPO/issues/$target/comments" -f body="$body" >/dev/null
-          echo "Delivered $mode $phase notification through target #$target for $local_date $local_hour."
+          echo "Delivered $mode $phase notification through target #$target for $local_date $local_hour:$local_minute."
