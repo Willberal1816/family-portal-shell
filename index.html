@@ -232,7 +232,7 @@ async function loadEncryptedReviewPages(a){
   var cipher=reviewB64Bytes(payload.cipherB64),enc=new TextEncoder();
   if(Number(m.cipherBytes||0)&&cipher.length!==Number(m.cipherBytes))throw new Error('The Review Packet transfer was incomplete.');
   if(m.cipherSha256){var ch=reviewBytesToHex(await crypto.subtle.digest('SHA-256',cipher));if(ch!==String(m.cipherSha256))throw new Error('The Review Packet transfer integrity check failed.');}
-  var keyBits=await crypto.subtle.digest('SHA-256',enc.encode('moran-review-v2|'+backend+'|'+student+'|'+date));
+  var keyScope=String(m.kdf||'')==='stable-v3'?('moran-review-v3|'+student+'|'+date+'|'+String(m.payloadId||'')):('moran-review-v2|'+backend+'|'+student+'|'+date);var keyBits=await crypto.subtle.digest('SHA-256',enc.encode(keyScope));
   var key=await crypto.subtle.importKey('raw',keyBits,{name:'AES-GCM'},false,['decrypt']);
   var plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:reviewB64Bytes(m.iv),additionalData:enc.encode(m.aad)},key,cipher);
   var hash=reviewBytesToHex(await crypto.subtle.digest('SHA-256',plain));if(hash!==String(m.sha256))throw new Error('The Review Packet integrity check failed.');
