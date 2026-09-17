@@ -3,11 +3,10 @@ name: Moran School Trigger Bridge
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7,27,47 15-21 * * *'
-    - cron: '17,37,57 15-21 * * *'
-    - cron: '7 22,23 * * *'
-    - cron: '27,47 22 * * *'
-    - cron: '17,37,57 22 * * *'
+    # Run broadly in UTC, then enforce the real America/Chicago window below.
+    # This keeps the intended local times correct across DST/CST changes.
+    - cron: '7,17,27,37,47,57 12-23 * * *'
+    - cron: '7,17,27,37,47,57 0-3 * * *'
 
 permissions:
   contents: read
@@ -24,7 +23,6 @@ jobs:
           DEFAULT_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
           RUN_ID: ${{ github.run_id }}
         shell: bash
         run: |
@@ -32,53 +30,17 @@ jobs:
           local_hour="$(TZ=America/Chicago date +'%H')"
           local_minute="$(TZ=America/Chicago date +'%M')"
 
-          if [ "$EVENT_NAME" = "schedule" ]; then
-            case "$EVENT_SCHEDULE" in
-              "7 22,23 * * *")
-                if [ "$local_hour" -eq 17 ]; then
-                  phase="WATCHDOG"
-                elif [ "$local_hour" -eq 16 ]; then
-                  phase="PRIMARY"
-                else
-                  echo "Outside Moran School window for this schedule; no trigger emitted."
-                  exit 0
-                fi
-                ;;
-              "27,47 22 * * *")
-                if [ "$local_hour" -ne 16 ]; then
-                  echo "Outside Moran School daytime window for this schedule; no trigger emitted."
-                  exit 0
-                fi
-                phase="PRIMARY"
-                ;;
-              "17,37,57 22 * * *")
-                if [ "$local_hour" -ne 16 ]; then
-                  echo "Outside Moran School daytime window for this schedule; no trigger emitted."
-                  exit 0
-                fi
-                phase="RETRY"
-                ;;
-              "17,37,57 15-21 * * *")
-                if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 16 ]; then
-                  echo "Outside Moran School daytime window; no trigger emitted."
-                  exit 0
-                fi
-                phase="RETRY"
-                ;;
-              *)
-                if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 16 ]; then
-                  echo "Outside Moran School daytime window; no trigger emitted."
-                  exit 0
-                fi
-                phase="PRIMARY"
-                ;;
+          if [ "$local_hour" -ge 7 ] && [ "$local_hour" -le 20 ]; then
+            case "$local_minute" in
+              07|27|47) phase="PRIMARY" ;;
+              17|37|57) phase="RETRY" ;;
+              *) echo "Unexpected Moran School schedule minute; no trigger emitted."; exit 0 ;;
             esac
+          elif [ "$local_hour" -eq 21 ] && [ "$local_minute" = "07" ]; then
+            phase="NIGHTLY_CLOSEOUT_PREFLIGHT"
           else
-            if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 17 ]; then
-              echo "Outside Moran School window; no trigger emitted."
-              exit 0
-            fi
-            phase="PRIMARY"
+            echo "Outside Moran School local execution window; no trigger emitted."
+            exit 0
           fi
 
           if [ -n "$USER_TOKEN" ]; then
@@ -90,7 +52,14 @@ jobs:
           fi
 
           stamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. Read and follow the CURRENT live Home Schooling Master Index and run the complete rolling Homeschool Daytime Review & Closeout workflow for all work eligible at this pass. Process each completed class immediately, publish its student Review as soon as reviewed, and preserve Assignment IDs and runtime state."
+
+          if [ "$phase" = "NIGHTLY_CLOSEOUT_PREFLIGHT" ]; then
+            instruction="Run the combined nightly closeout + next-day preflight. First process any remaining safely matchable current-day work, finish missing class Reviews/advancement/curriculum repairs, finalize or update the one authoritative daily parent Review Packet per student when applicable, and explicitly account for anything genuinely unresolved. Then preflight the next calendar school day and the rolling five-day horizon so next-day student-facing classes are prerequisite-safe, resource-complete, instruction-quality checked, appropriately timed, and ready before morning. Preserve Assignment IDs and runtime state; do not create school work for an explicitly designated no-school date."
+          else
+            instruction="Run the rolling Homeschool Daytime Review workflow for all work eligible now. Process every newly completed safely matchable class without waiting for the rest of the day, publish its student Review as soon as reviewed, make the required advancement decision, apply any instruction/curriculum repair immediately, and preserve Assignment IDs and runtime state."
+          fi
+
+          body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. $instruction Read and follow the CURRENT live Home Schooling Master Index. Image-only scans are normal evidence."
 
           gh api --method POST "repos/$REPO/issues/4/comments" -f body="$body" >/dev/null
-          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase"
+          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase local_time=$local_hour:$local_minute"
