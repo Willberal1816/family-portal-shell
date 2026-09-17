@@ -1,13 +1,9 @@
 name: Moran School Trigger Bridge
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '7,27,47 15-21 * * *'
-    - cron: '17,37,57 15-21 * * *'
-    - cron: '7 22,23 * * *'
-    - cron: '27,47 22 * * *'
-    - cron: '17,37,57 22 * * *'
+  push:
+    paths:
+      - '.github/workflows/moran-school-trigger-bridge.yml'
 
 permissions:
   contents: read
@@ -18,79 +14,15 @@ jobs:
   deliver:
     runs-on: ubuntu-latest
     steps:
-      - name: Deliver external school trigger
+      - name: Edit persistent Moran user anchor
         env:
-          USER_TOKEN: ${{ secrets.GH_PAT }}
-          DEFAULT_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          EVENT_NAME: ${{ github.event_name }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
           RUN_ID: ${{ github.run_id }}
+          ANCHOR_COMMENT_ID: '5686617452'
         shell: bash
         run: |
-          local_date="$(TZ=America/Chicago date +'%Y-%m-%d')"
-          local_hour="$(TZ=America/Chicago date +'%H')"
-          local_minute="$(TZ=America/Chicago date +'%M')"
-
-          if [ "$EVENT_NAME" = "schedule" ]; then
-            case "$EVENT_SCHEDULE" in
-              "7 22,23 * * *")
-                if [ "$local_hour" -eq 17 ]; then
-                  phase="WATCHDOG"
-                elif [ "$local_hour" -eq 16 ]; then
-                  phase="PRIMARY"
-                else
-                  echo "Outside Moran School window for this schedule; no trigger emitted."
-                  exit 0
-                fi
-                ;;
-              "27,47 22 * * *")
-                if [ "$local_hour" -ne 16 ]; then
-                  echo "Outside Moran School daytime window for this schedule; no trigger emitted."
-                  exit 0
-                fi
-                phase="PRIMARY"
-                ;;
-              "17,37,57 22 * * *")
-                if [ "$local_hour" -ne 16 ]; then
-                  echo "Outside Moran School daytime window for this schedule; no trigger emitted."
-                  exit 0
-                fi
-                phase="RETRY"
-                ;;
-              "17,37,57 15-21 * * *")
-                if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 16 ]; then
-                  echo "Outside Moran School daytime window; no trigger emitted."
-                  exit 0
-                fi
-                phase="RETRY"
-                ;;
-              *)
-                if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 16 ]; then
-                  echo "Outside Moran School daytime window; no trigger emitted."
-                  exit 0
-                fi
-                phase="PRIMARY"
-                ;;
-            esac
-          else
-            if [ "$local_hour" -lt 11 ] || [ "$local_hour" -gt 17 ]; then
-              echo "Outside Moran School window; no trigger emitted."
-              exit 0
-            fi
-            phase="PRIMARY"
-          fi
-
-          if [ -n "$USER_TOKEN" ]; then
-            export GH_TOKEN="$USER_TOKEN"
-            auth_mode="user"
-          else
-            export GH_TOKEN="$DEFAULT_TOKEN"
-            auth_mode="fallback-bot"
-          fi
-
           stamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. Read and follow the CURRENT live Home Schooling Master Index and run the complete rolling Homeschool Daytime Review & Closeout workflow for all work eligible at this pass. Process each completed class immediately, publish its student Review as soon as reviewed, and preserve Assignment IDs and runtime state."
-
-          gh api --method POST "repos/$REPO/issues/4/comments" -f body="$body" >/dev/null
-          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase"
+          body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$(TZ=America/Chicago date +'%Y-%m-%d') time=$(TZ=America/Chicago date +'%H:%M') phase=ANCHOR_EDIT_RESTORE_VERIFY github_run_id=$RUN_ID timestamp=$stamp. Controlled transport verification under the CURRENT live Home Schooling Master Index. Preserve Assignment IDs and runtime state; perform only idempotent eligible work."
+          gh api --method PATCH "repos/$REPO/issues/comments/$ANCHOR_COMMENT_ID" -f body="$body" >/dev/null
+          echo "Updated persistent user-authored Moran anchor."
