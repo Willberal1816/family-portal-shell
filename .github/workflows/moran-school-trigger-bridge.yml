@@ -30,7 +30,12 @@ jobs:
           local_hour="$(TZ=America/Chicago date +'%H')"
           local_minute="$(TZ=America/Chicago date +'%M')"
 
-          if [ "$local_hour" -ge 7 ] && [ "$local_hour" -le 20 ]; then
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            # An explicit operator dispatch is a recovery/verification action and
+            # must always emit a usable trigger instead of silently succeeding
+            # only when launched on one of the cron minutes.
+            phase="PRIMARY"
+          elif [ "$local_hour" -ge 7 ] && [ "$local_hour" -le 20 ]; then
             case "$local_minute" in
               07|27|47) phase="PRIMARY" ;;
               17|37|57) phase="RETRY" ;;
@@ -62,4 +67,4 @@ jobs:
           body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. $instruction Read and follow the CURRENT live Home Schooling Master Index. Image-only scans are normal evidence."
 
           gh api --method POST "repos/$REPO/issues/4/comments" -f body="$body" >/dev/null
-          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase local_time=$local_hour:$local_minute"
+          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase local_time=$local_hour:$local_minute event=$EVENT_NAME"
