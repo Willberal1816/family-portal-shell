@@ -3,7 +3,9 @@ name: Moran School Trigger Clock
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7,17,27,37,47,57 7-20 * * *'
+    - cron: '7,27,47 7-20 * * *'
+      timezone: 'America/Chicago'
+    - cron: '17,37,57 7-20 * * *'
       timezone: 'America/Chicago'
     - cron: '7 21 * * *'
       timezone: 'America/Chicago'
@@ -33,14 +35,16 @@ jobs:
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             phase="PRIMARY"
-          elif [ "$local_hour" -eq 21 ] && [ "$local_minute" = "07" ]; then
-            phase="NIGHTLY_CLOSEOUT_PREFLIGHT"
-          else
-            case "$local_minute" in
-              07|27|47) phase="PRIMARY" ;;
-              17|37|57) phase="RETRY" ;;
-              *) echo "Unexpected Moran School schedule minute; no trigger emitted."; exit 0 ;;
+          elif [ "$EVENT_NAME" = "schedule" ]; then
+            case "$EVENT_SCHEDULE" in
+              "7,27,47 7-20 * * *") phase="PRIMARY" ;;
+              "17,37,57 7-20 * * *") phase="RETRY" ;;
+              "7 21 * * *") phase="NIGHTLY_CLOSEOUT_PREFLIGHT" ;;
+              *) echo "ERROR: Unknown Moran School schedule: $EVENT_SCHEDULE"; exit 1 ;;
             esac
+          else
+            echo "ERROR: Unsupported event: $EVENT_NAME"
+            exit 1
           fi
 
           if [ -n "$USER_TOKEN" ]; then
