@@ -3,9 +3,7 @@ name: Moran School Trigger Clock
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7,27,47 7-20 * * *'
-      timezone: 'America/Chicago'
-    - cron: '17,37,57 7-20 * * *'
+    - cron: '7,17,27,37,47,57 7-20 * * *'
       timezone: 'America/Chicago'
     - cron: '7 21 * * *'
       timezone: 'America/Chicago'
@@ -37,8 +35,7 @@ jobs:
             phase="PRIMARY"
           elif [ "$EVENT_NAME" = "schedule" ]; then
             case "$EVENT_SCHEDULE" in
-              "7,27,47 7-20 * * *") phase="PRIMARY" ;;
-              "17,37,57 7-20 * * *") phase="RETRY" ;;
+              "7,17,27,37,47,57 7-20 * * *") phase="PRIMARY" ;;
               "7 21 * * *") phase="NIGHTLY_CLOSEOUT_PREFLIGHT" ;;
               *) echo "ERROR: Unknown Moran School schedule: $EVENT_SCHEDULE"; exit 1 ;;
             esac
@@ -60,7 +57,7 @@ jobs:
           if [ "$phase" = "NIGHTLY_CLOSEOUT_PREFLIGHT" ]; then
             instruction="Run the combined nightly closeout + next-day preflight. First process any remaining safely matchable current-day work, finish missing class Reviews/advancement/curriculum repairs, finalize or update the one authoritative daily parent Review Packet per student when applicable, and explicitly account for anything genuinely unresolved. Then preflight the next calendar school day and the rolling five-day horizon so next-day student-facing classes are prerequisite-safe, resource-complete, instruction-quality checked, appropriately timed, and ready before morning. Preserve Assignment IDs and runtime state; do not create school work for an explicitly designated no-school date."
           else
-            instruction="Run the rolling Homeschool Daytime Review workflow for all work eligible now. Process every newly completed safely matchable class without waiting for the rest of the day, publish its student Review as soon as reviewed, make the required advancement decision, apply any instruction/curriculum repair immediately, and preserve Assignment IDs and runtime state."
+            instruction="Run the rolling Homeschool Daytime Review workflow for all work eligible now. Process every newly completed safely matchable class without waiting for the rest of the day, publish the student Review as soon as reviewed, make the required advancement decision, apply any instruction/curriculum repair immediately, and preserve Assignment IDs and runtime state."
           fi
 
           body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. $instruction Read and follow the CURRENT live Home Schooling Master Index. Image-only scans are normal evidence."
