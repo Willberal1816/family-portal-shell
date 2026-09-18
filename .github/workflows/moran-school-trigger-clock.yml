@@ -3,10 +3,10 @@ name: Moran School Trigger Clock
 on:
   workflow_dispatch:
   schedule:
-    - cron: '7,17,27,37,47,57 7-20 * * *'
-      timezone: 'America/Chicago'
-    - cron: '7 21 * * *'
-      timezone: 'America/Chicago'
+    # GitHub cron is UTC. Run every 10 minutes at :07/:17/... all day,
+    # then decide the real school phase from America/Chicago inside the job.
+    # This avoids timezone-registration drift and remains correct across DST.
+    - cron: '7,17,27,37,47,57 * * * *'
 
 permissions:
   contents: read
@@ -23,7 +23,6 @@ jobs:
           DEFAULT_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
           RUN_ID: ${{ github.run_id }}
         shell: bash
         run: |
@@ -34,10 +33,17 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             phase="PRIMARY"
           elif [ "$EVENT_NAME" = "schedule" ]; then
-            case "$EVENT_SCHEDULE" in
-              "7,17,27,37,47,57 7-20 * * *") phase="PRIMARY" ;;
-              "7 21 * * *") phase="NIGHTLY_CLOSEOUT_PREFLIGHT" ;;
-              *) echo "ERROR: Unknown Moran School schedule: $EVENT_SCHEDULE"; exit 1 ;;
+            case "$local_hour" in
+              07|08|09|10|11|12|13|14|15|16|17|18|19|20)
+                phase="PRIMARY"
+                ;;
+              21)
+                phase="NIGHTLY_CLOSEOUT_PREFLIGHT"
+                ;;
+              *)
+                echo "Outside Moran School local execution window: $local_hour:$local_minute America/Chicago"
+                exit 0
+                ;;
             esac
           else
             echo "ERROR: Unsupported event: $EVENT_NAME"
@@ -52,6 +58,18 @@ jobs:
             auth_mode="fallback-bot"
           fi
 
+          if [ "$phase" = "NIGHTLY_CLOSEOUT_PREFLIGHT" ]; then
+            existing_nightly="$(
+              gh api --paginate "repos/$REPO/issues/4/comments?per_page=100" --jq '.[].body' |
+              grep -F "MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date" |
+              grep -F "phase=NIGHTLY_CLOSEOUT_PREFLIGHT" || true
+            )"
+            if [ -n "$existing_nightly" ]; then
+              echo "Nightly closeout trigger already delivered for $local_date; skipping duplicate."
+              exit 0
+            fi
+          fi
+
           stamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
           if [ "$phase" = "NIGHTLY_CLOSEOUT_PREFLIGHT" ]; then
@@ -63,4 +81,4 @@ jobs:
           body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. $instruction Read and follow the CURRENT live Home Schooling Master Index. Image-only scans are normal evidence."
 
           gh api --method POST "repos/$REPO/issues/4/comments" -f body="$body" >/dev/null
-          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase local_time=$local_hour:$local_minute event=$EVENT_NAME schedule=$EVENT_SCHEDULE"
+          echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase local_time=$local_hour:$local_minute event=$EVENT_NAME"
