@@ -64,6 +64,7 @@ jobs:
               'Khan resource recognition': "function isKhanResource(r)",
               'Portal resource validator': "function isPortalResourceUrl(url)",
               'Khan videos embedded inline': "IL3UCuXrUzE",
+              'Emma kinetic energy inline video': "FtymZWAOeC0",
               'Blocked external resources': "kind:'blocked'",
               'Finish guard for external resource': "buildLessonSteps(active).some(function(x){return x.kind==='blocked'})",
           }
