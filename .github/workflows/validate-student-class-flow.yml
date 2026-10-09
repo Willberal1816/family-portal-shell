@@ -62,20 +62,21 @@ jobs:
               'Review button routing': "onclick=\"openReview('+a.row+')\">Review</button>",
               'scanner homework step': "Scan Your Homework",
               'Khan resource recognition': "function isKhanResource(r)",
-              'Khan activity step kind': "kind:'khan'",
-              'Khan controlled launch': "function openKhanStep(idx,url)",
-              'Khan explicit completion': "I Finished This Khan Step",
+              'Portal resource validator': "function isPortalResourceUrl(url)",
+              'Khan videos embedded inline': "IL3UCuXrUzE",
+              'Blocked external resources': "kind:'blocked'",
+              'Finish guard for external resource': "buildLessonSteps(active).some(function(x){return x.kind==='blocked'})",
           }
           for label, marker in required_portal.items():
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
 
-          if "function openKhanStep(idx,url)" in portal:
-              khan_open = portal.split("function openKhanStep(idx,url)",1)[1].split('\nfunction ',1)[0]
-              if 'saveStepDone' in khan_open:
-                  errors.append('Opening a Khan activity must not mark the lesson step complete')
-          if "step.kind==='khan'" not in portal or 'Opening the Khan page does not mark this step finished.' not in portal:
-              errors.append('Khan activities must remain incomplete until the student explicitly finishes the step')
+          if "function openKhanStep(idx,url)" in portal or 'I Finished This Khan Step' in portal:
+              errors.append('Off-site Khan lesson activity must not appear in student workflow')
+          if "else if(isKhanResource(r)){other.push({kind:'blocked'" not in portal:
+              errors.append('Nonembeddable Khan resources must be blocked until replaced by portal-hosted teaching/practice')
+          if "if(isPortalResourceUrl(r.url))paper.push" not in portal or "if(isPortalResourceUrl(r.url))teach.push" not in portal:
+              errors.append('Required printable and teaching resources must be restricted to portal origin')
 
           if "if(isIOSDevice()){window.open(url,'_blank');return}" in portal:
               errors.append('Legacy iOS printable behavior only opens the worksheet instead of invoking print')
