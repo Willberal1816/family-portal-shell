@@ -72,6 +72,11 @@ jobs:
               if marker not in portal:
                   errors.append(f'Portal missing {label}: {marker}')
 
+          video_pairs = [('slope-intercept-form', 'IL3UCuXrUzE'), ('ms-kinetic-energy', 'FtymZWAOeC0')]
+          for slug, video_id in video_pairs:
+              if not re.search(r'khanacademy[^\\n]*' + re.escape(slug) + r'[^\\n]*' + re.escape(video_id), portal):
+                  errors.append('Missing working inline video route: ' + slug)
+
           if "function openKhanStep(idx,url)" in portal or 'I Finished This Khan Step' in portal:
               errors.append('Off-site Khan lesson activity must not appear in student workflow')
           if "else if(isKhanResource(r)){other.push({kind:'blocked'" not in portal:
