@@ -3,3 +3,27 @@
 /* tracking-print-header:table-repeat-v4 */
 /* student-controls-version:20260911-8 */
 /* tracking-print-header:table-repeat-v3 compatibility */
+
+
+/* Print-only ink-saving correction: blank writing surfaces must remain white,
+   never a dark or image-filled rectangle. Handwriting rules use real borders. */
+@media print {
+  .lines,.answer,.answers,.response,.writing-space,.write,.work,.workbox,.draw,
+  textarea,input[type="text"],input[type="number"],[contenteditable="true"] {
+    background:#fff!important;
+    background-color:#fff!important;
+    background-image:none!important;
+    box-shadow:none!important;
+    color:#000!important;
+    -webkit-print-color-adjust:economy!important;
+    print-color-adjust:economy!important;
+  }
+  .lines{position:relative!important;border-bottom:1px solid #888!important;}
+  .lines::before,.lines::after {
+    content:"";display:block;position:absolute;left:0;right:0;
+    border-top:1px solid #b8b8b8;pointer-events:none;
+  }
+  .lines::before{top:33%}.lines::after{top:66%}
+  .draw,.workbox,.response,.answer{border:1px solid #888!important}
+  .source,.panel,.model,.check{background-color:#fff!important;color:#000!important}
+}
