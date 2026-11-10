@@ -48,7 +48,7 @@ jobs:
           ]
           for stem in stems:
               html=Path(f'worksheets/curriculum/lessons/{stem}.html').read_text(encoding='utf-8')
-              ids=set(re.findall(r'2026-\\d{2}-\\d{2}-EMM-[A-Z0-9-]+',html))
+              ids=set(re.findall(r'2026-\d{2}-\d{2}-EMM-[A-Z0-9-]+',html))
               if len(ids)!=1:
                   raise SystemExit(f'{stem}: expected exactly one authoritative Assignment ID, found {ids}')
               expected=next(iter(ids))
