@@ -73,7 +73,10 @@
     help.appendChild(copy);help.appendChild(note);
     bar.parentNode.insertBefore(help,bar.nextSibling);
   }
+  function isHomeScreenSchoolApp(){try{return navigator.standalone===true||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)}catch(e){return navigator.standalone===true}}
+  function isEmmaPrintableLesson(){return isTeachingPage()&&hasPrintableWork()&&/\/emma-[^/]*\.html$/i.test(location.pathname)}
   function printWorksheetNow(){
+    if(isIOSPrintDevice()&&isHomeScreenSchoolApp()&&isEmmaPrintableLesson()){showPrintRecovery();return;}
     var printStarted=false;
     var started=function(){printStarted=true};
     if(isIOSPrintDevice()){
