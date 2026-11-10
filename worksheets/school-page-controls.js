@@ -23,6 +23,7 @@
   }
   function trackingId(c){if(c.id)return c.id;if(c.row&&c.date)return 'ROW-'+c.row+'-'+String(c.date).replace(/[^0-9]/g,'');return''}
   function isTeachingPage(){return /\/worksheets\/curriculum\/lessons\//i.test(location.pathname)}
+  function hasPrintableWork(){return !!document.getElementById('printable')}
 
   function backToClass(){
     try{
@@ -53,7 +54,7 @@
     table.remove();
   }
   function printWorksheetNow(){try{window.__schoolAutoPrintHandled=true;window.focus();window.print()}catch(e){window.__schoolAutoPrintHandled=false}}
-  function autoPrintIfRequested(){if(isTeachingPage()||param('print')!=='1')return;var run=function(){setTimeout(printWorksheetNow,200)};if(document.readyState==='complete')run();else window.addEventListener('load',run,{once:true})}
+  function autoPrintIfRequested(){if((isTeachingPage()&&!hasPrintableWork())||param('print')!=='1')return;var run=function(){setTimeout(printWorksheetNow,200)};if(document.readyState==='complete')run();else window.addEventListener('load',run,{once:true})}
 
   function ensureStyles(){
     if(document.getElementById('school-page-controls-inline-style'))return;
@@ -73,7 +74,7 @@
     back.type='button';back.className='school-nav school-back';back.textContent='← Back to This Class';back.addEventListener('click',backToClass);bar.appendChild(back);
     var portal=document.createElement('button');
     portal.type='button';portal.className='school-nav school-portal';portal.textContent='Back to School Portal';portal.addEventListener('click',backToPortal);bar.appendChild(portal);
-    if(!isTeachingPage()){var print=document.createElement('button');print.type='button';print.className='school-nav school-print';print.textContent='Print Worksheet';print.addEventListener('click',printWorksheetNow);bar.appendChild(print)}
+    if(!isTeachingPage()||hasPrintableWork()){var print=document.createElement('button');print.type='button';print.className='school-nav school-print';print.textContent='Print Worksheet';print.addEventListener('click',printWorksheetNow);bar.appendChild(print)}
     document.body.insertBefore(bar,document.body.firstChild);
   }
 
