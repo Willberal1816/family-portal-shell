@@ -1,0 +1,65 @@
+name: Build Emma Math Printable PDF
+
+on:
+  push:
+    paths:
+      - '.github/workflows/emma-math-printable-pdf.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: emma-math-printable-pdf
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Render the existing two-page worksheet to a same-site PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_file="worksheets/curriculum/lessons/emma-math-package-nets-43.html"
+          output_file="worksheets/curriculum/print-pdf/emma-math-package-nets-43.pdf"
+          mkdir -p "$(dirname "$output_file")"
+          browser="$(command -v google-chrome || command -v chromium || true)"
+          if [ -z "$browser" ]; then
+            echo "No headless Chrome/Chromium is available on this runner." >&2
+            exit 1
+          fi
+          "$browser" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$GITHUB_WORKSPACE/$output_file" "file://$GITHUB_WORKSPACE/$source_file"
+          test -s "$output_file"
+          python -m pip -q install pypdf
+          python - <<'PY'
+          from pypdf import PdfReader
+          path='worksheets/curriculum/print-pdf/emma-math-package-nets-43.pdf'
+          doc=PdfReader(path)
+          if len(doc.pages)!=2:
+              raise SystemExit(f'Expected two actual student worksheet pages, got {len(doc.pages)}')
+          expected='2026-11-10-EMM-MATH-PACKAGE-NETS-43'
+          for i, page in enumerate(doc.pages, 1):
+              text=page.extract_text() or ''
+              if expected not in text or 'Box Nets' not in text:
+                  raise SystemExit(f'Missing worksheet identity/content on printed page {i}')
+          print('Verified 2 printable pages; both carry the authoritative Tracking ID and lesson title.')
+          PY
+
+      - name: Commit generated PDF only after validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add worksheets/curriculum/print-pdf/emma-math-package-nets-43.pdf
+          if git diff --cached --quiet; then
+            echo "No change to printable PDF."
+            exit 0
+          fi
+          git commit -m "Add verified same-site printable PDF for Emma Math"
+          git push
