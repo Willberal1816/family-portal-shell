@@ -1,4 +1,4 @@
-name: Build Emma Math Printable PDF
+name: Build Emma Current Printables
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: emma-math-printable-pdf
+  group: emma-current-printables
   cancel-in-progress: false
 
 jobs:
@@ -21,45 +21,60 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Render the existing two-page worksheet to a same-site PDF
+      - name: Render and validate five current student printables
         shell: bash
         run: |
           set -euo pipefail
-          source_file="worksheets/curriculum/lessons/emma-math-package-nets-43.html"
-          output_file="worksheets/curriculum/print-pdf/emma-math-package-nets-43.pdf"
-          mkdir -p "$(dirname "$output_file")"
           browser="$(command -v google-chrome || command -v chromium || true)"
           if [ -z "$browser" ]; then
-            echo "No headless Chrome/Chromium is available on this runner." >&2
+            echo "No headless Chrome/Chromium is available." >&2
             exit 1
           fi
-          "$browser" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$GITHUB_WORKSPACE/$output_file" "file://$GITHUB_WORKSPACE/$source_file"
-          test -s "$output_file"
           python -m pip -q install pypdf
+          mkdir -p worksheets/curriculum/print-pdf
+          for stem in emma-math-package-nets-43 emma-la-trail-update-43 emma-reading-nov10-book-43 emma-social-harbor-records-41 emma-art-distance-path-43; do
+            "$browser" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$GITHUB_WORKSPACE/worksheets/curriculum/print-pdf/$stem.pdf" "file://$GITHUB_WORKSPACE/worksheets/curriculum/lessons/$stem.html"
+          done
           python - <<'PY'
+          import re
+          from pathlib import Path
           from pypdf import PdfReader
-          path='worksheets/curriculum/print-pdf/emma-math-package-nets-43.pdf'
-          doc=PdfReader(path)
-          if len(doc.pages)!=2:
-              raise SystemExit(f'Expected two actual student worksheet pages, got {len(doc.pages)}')
-          expected='2026-11-10-EMM-MATH-PACKAGE-NETS-43'
-          for i, page in enumerate(doc.pages, 1):
-              text=page.extract_text() or ''
-              if expected not in text or 'Box Nets' not in text:
-                  raise SystemExit(f'Missing worksheet identity/content on printed page {i}')
-          print('Verified 2 printable pages; both carry the authoritative Tracking ID and lesson title.')
+          stems=[
+            'emma-math-package-nets-43',
+            'emma-la-trail-update-43',
+            'emma-reading-nov10-book-43',
+            'emma-social-harbor-records-41',
+            'emma-art-distance-path-43'
+          ]
+          for stem in stems:
+              html=Path(f'worksheets/curriculum/lessons/{stem}.html').read_text(encoding='utf-8')
+              ids=set(re.findall(r'2026-\\d{2}-\\d{2}-EMM-[A-Z0-9-]+',html))
+              if len(ids)!=1:
+                  raise SystemExit(f'{stem}: expected exactly one authoritative Assignment ID, found {ids}')
+              expected=next(iter(ids))
+              pdf=Path(f'worksheets/curriculum/print-pdf/{stem}.pdf')
+              reader=PdfReader(str(pdf))
+              if len(reader.pages)!=2:
+                  raise SystemExit(f'{stem}: expected 2 actual physical work pages, got {len(reader.pages)}')
+              for page_no,page in enumerate(reader.pages,1):
+                  text=page.extract_text() or ''
+                  if expected not in text:
+                      raise SystemExit(f'{stem}: missing Tracking ID {expected} on printed page {page_no}')
+                  if len(text.strip())<75:
+                      raise SystemExit(f'{stem}: printed page {page_no} is blank or nearly empty')
+              print(f'{stem}: verified 2 complete pages with {expected} on each.')
           PY
 
-      - name: Commit generated PDF only after validation
+      - name: Commit validated same-site PDFs
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add worksheets/curriculum/print-pdf/emma-math-package-nets-43.pdf
+          git add worksheets/curriculum/print-pdf/emma-*.pdf
           if git diff --cached --quiet; then
-            echo "No change to printable PDF."
+            echo "All Emma PDFs are current."
             exit 0
           fi
-          git commit -m "Add verified same-site printable PDF for Emma Math"
+          git commit -m "Add validated same-site PDF print sheets for Emma current classes"
           git push
