@@ -53,7 +53,38 @@
     while(td.firstChild)document.body.insertBefore(td.firstChild,table);
     table.remove();
   }
-  function printWorksheetNow(){try{window.__schoolAutoPrintHandled=true;window.focus();window.print()}catch(e){window.__schoolAutoPrintHandled=false}}
+  function isIOSPrintDevice(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+  function printLink(){try{var u=new URL(location.href);u.searchParams.delete('print');return u.href}catch(e){return location.href}}
+  function showPrintRecovery(){
+    if(document.getElementById('school-print-recovery'))return;
+    var bar=document.getElementById('school-page-controls');
+    if(!bar)return;
+    var help=document.createElement('aside');help.id='school-print-recovery';help.setAttribute('role','status');
+    help.style.cssText='margin:8px 0 14px;padding:12px;border:2px solid #607d96;border-radius:10px;background:#f5f9ff;color:#172033;font:15px/1.45 -apple-system,BlinkMacSystemFont,Arial,sans-serif';
+    var title=document.createElement('strong');title.textContent='No print window?';help.appendChild(title);
+    var description=document.createElement('p');description.textContent='Some iPad home-screen apps do not open the print dialog. Open this worksheet in Safari and tap Print Worksheet there. Your class and Tracking number will be preserved.';help.appendChild(description);
+    var link=document.createElement('a');link.href=printLink();link.target='_blank';link.rel='noopener noreferrer';link.textContent='Open worksheet in browser';
+    link.style.cssText='display:inline-block;margin:3px 12px 6px 0;padding:9px 11px;background:#fff;color:#124a72;border:1px solid #789;border-radius:8px;font-weight:700';
+    help.appendChild(link);
+    var copy=document.createElement('button');copy.type='button';copy.textContent='Copy worksheet link';
+    copy.style.cssText='padding:10px;border:1px solid #789;border-radius:8px;background:#fff;color:#124a72;font-weight:700';
+    var note=document.createElement('p');note.style.cssText='margin:7px 0 0;font-size:13px';note.textContent='If the link remains inside the school app, copy the link, open Safari, paste it into the address bar, then tap Print Worksheet.';
+    copy.addEventListener('click',function(){var url=printLink();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){note.textContent='Copied. Open Safari, paste the link, and tap Print Worksheet.'}).catch(function(){note.textContent='Copy this address into Safari: '+url})}else{note.textContent='Copy this address into Safari: '+url}});
+    help.appendChild(copy);help.appendChild(note);
+    bar.parentNode.insertBefore(help,bar.nextSibling);
+  }
+  function printWorksheetNow(){
+    var printStarted=false;
+    var started=function(){printStarted=true};
+    if(isIOSPrintDevice()){
+      window.addEventListener('beforeprint',started,{once:true});
+      window.addEventListener('afterprint',started,{once:true});
+      setTimeout(function(){if(!printStarted)showPrintRecovery()},1300);
+    }
+    try{window.__schoolAutoPrintHandled=true;window.focus();window.print()}
+    catch(e){window.__schoolAutoPrintHandled=false;showPrintRecovery()}
+  }
+  window.schoolPrintWorksheet=printWorksheetNow;
   function autoPrintIfRequested(){if((isTeachingPage()&&!hasPrintableWork())||param('print')!=='1')return;var run=function(){setTimeout(printWorksheetNow,200)};if(document.readyState==='complete')run();else window.addEventListener('load',run,{once:true})}
 
   function ensureStyles(){
