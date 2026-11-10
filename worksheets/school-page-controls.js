@@ -34,7 +34,19 @@
     }catch(e){}
     location.href=savedPortal()||FALLBACK;
   }
-  function backToPortal(){location.href=savedPortal()||FALLBACK}
+  function backToPortal(){
+    var destination=savedPortal()||FALLBACK;
+    if(isTeachingPage()&&/\/emma-[^/]*\.html$/i.test(location.pathname)){
+      try{
+        var target=new URL(destination,location.href);
+        if(target.origin===location.origin&&target.pathname.indexOf('/family-portal-shell/')===0){
+          target.searchParams.set('schoolRefresh','20261110-print-parity-5');
+          destination=target.href;
+        }
+      }catch(e){}
+    }
+    location.href=destination;
+  }
 
   function preparePrintDocument(){
     if(isTeachingPage()||document.getElementById(PRINT_TABLE_ID))return;
