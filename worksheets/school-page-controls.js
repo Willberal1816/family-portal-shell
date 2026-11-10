@@ -65,7 +65,7 @@
     while(td.firstChild)document.body.insertBefore(td.firstChild,table);
     table.remove();
   }
-  function printWorksheetNow(){try{window.__schoolAutoPrintHandled=true;window.focus();window.print()}catch(e){window.__schoolAutoPrintHandled=false}}
+  function printWorksheetNow(){if(window.schoolNativePrint&&window.schoolNativePrint(location.href))return;try{window.__schoolAutoPrintHandled=true;window.focus();window.print()}catch(e){window.__schoolAutoPrintHandled=false}}
   window.schoolPrintWorksheet=printWorksheetNow;
   function autoPrintIfRequested(){if((isTeachingPage()&&!hasPrintableWork())||param('print')!=='1')return;var run=function(){setTimeout(printWorksheetNow,200)};if(document.readyState==='complete')run();else window.addEventListener('load',run,{once:true})}
 
