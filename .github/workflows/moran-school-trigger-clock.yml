@@ -60,7 +60,7 @@ jobs:
 
           if [ "$phase" = "NIGHTLY_CLOSEOUT_PREFLIGHT" ]; then
             existing_nightly="$(
-              gh api --paginate "repos/$REPO/issues/4/comments?per_page=100" --jq '.[].body' |
+              gh api --paginate "repos/$REPO/issues/6/comments?per_page=100" --jq '.[].body' |
               grep -F "MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date" |
               grep -F "phase=NIGHTLY_CLOSEOUT_PREFLIGHT" || true
             )"
@@ -80,5 +80,5 @@ jobs:
 
           body="MORAN_HOMESCHOOL_REVIEW_TRIGGER date=$local_date time=$local_hour:$local_minute phase=$phase github_run_id=$RUN_ID timestamp=$stamp. $instruction Read and follow the CURRENT live Home Schooling Master Index. Image-only scans are normal evidence."
 
-          gh api --method POST "repos/$REPO/issues/4/comments" -f body="$body" >/dev/null
+          gh api --method POST "repos/$REPO/issues/6/comments" -f body="$body" >/dev/null
           echo "Delivered Moran trigger auth_mode=$auth_mode phase=$phase local_time=$local_hour:$local_minute event=$EVENT_NAME"
