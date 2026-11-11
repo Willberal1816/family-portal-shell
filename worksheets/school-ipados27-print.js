@@ -1,14 +1,14 @@
 /* Same-site native Share-sheet printing for iPadOS standalone school app.
    Chrome-rendered PDF files retain original workbook pages and Tracking IDs.
-   Only Emma's five verified current lesson PDFs use this path. */
+   Keep existing verified Emma PDFs intact; new dated lesson PDFs share the same iPadOS path. */
 (function(){
  'use strict';
  var root='/family-portal-shell/worksheets/curriculum/';
- var stems=['emma-math-package-nets-43','emma-la-trail-update-43','emma-reading-nov10-book-43','emma-social-harbor-records-41','emma-art-distance-path-43'];
+ var stems=['emma-math-package-nets-43','emma-la-trail-update-43','emma-reading-nov10-book-43','emma-social-harbor-records-41','emma-art-distance-path-43','emma-math-garden-layout-44','natalie-math-market-receipt-44','emma-la-creek-notice-44','natalie-la-garden-survey-44','emma-reading-setting-change-44','natalie-reading-turning-points-44','emma-science-flight-data-44','natalie-science-rocket-evidence-44','emma-project-straw-rocket-44','natalie-project-straw-rocket-44'];
  var resources={},states={};
  stems.forEach(function(stem){
    var lesson=root+'lessons/'+stem+'.html';
-   resources[lesson]={pdf:root+'print-pdf/'+stem+'.pdf',name:'Emma-'+stem.replace(/^emma-/,'')+'.pdf'};
+   resources[lesson]={pdf:root+'print-pdf/'+stem+'.pdf',name:(stem.indexOf('natalie-')===0?'Natalie-':'Emma-')+stem.replace(/^(emma|natalie)-/,'')+'.pdf'};
    states[lesson]={file:null,loading:false,error:''};
  });
  function requestedPath(url){
@@ -57,7 +57,7 @@
    if(state.file){
      showStatus('In the iPad Share sheet, choose Print to print the worksheet. Your School Portal remains open.');
      try{
-       navigator.share({files:[state.file],title:'Emma School Worksheet'}).catch(function(e){
+       navigator.share({files:[state.file],title:(path.indexOf('/natalie-')>=0?'Natalie School Worksheet':'Emma School Worksheet')}).catch(function(e){
          if(e&&e.name==='AbortError')return;
          showStatus('Could not open the iPad Share sheet: '+(e&&e.message||'Unknown error'));
        });
