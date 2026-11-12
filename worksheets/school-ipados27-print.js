@@ -4,7 +4,7 @@
 (function(){
  'use strict';
  var root='/family-portal-shell/worksheets/curriculum/';
- var stems=['emma-math-package-nets-43','emma-la-trail-update-43','emma-reading-nov10-book-43','emma-social-harbor-records-41','emma-art-distance-path-43','emma-math-garden-layout-44','natalie-math-market-receipt-44','emma-la-creek-notice-44','natalie-la-garden-survey-44','emma-reading-setting-change-44','natalie-reading-turning-points-44','emma-science-flight-data-44','natalie-science-rocket-evidence-44','emma-project-straw-rocket-44','natalie-project-straw-rocket-44'];
+ var stems=['emma-math-package-nets-43','emma-la-trail-update-43','emma-reading-nov10-book-43','emma-social-harbor-records-41','emma-art-distance-path-43','emma-math-garden-layout-44','natalie-math-market-receipt-44','emma-la-creek-notice-44','natalie-la-garden-survey-44','emma-reading-setting-change-44','natalie-reading-turning-points-44','emma-science-flight-data-44','natalie-science-rocket-evidence-44','emma-project-straw-rocket-44','natalie-project-straw-rocket-44','emma-math-group-or-extra-45','natalie-math-two-market-baskets-45','emma-la-library-announcement-45','natalie-la-bus-stop-survey-45','emma-reading-change-of-plan-45','natalie-reading-claim-certainty-45','emma-science-ramp-controls-45','natalie-science-spring-toy-energy-45','emma-social-library-rules-45','natalie-social-park-hearing-45'];
  var resources={},states={};
  stems.forEach(function(stem){
    var lesson=root+'lessons/'+stem+'.html';
