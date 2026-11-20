@@ -18,6 +18,8 @@ jobs:
   deliver:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out parent-controlled school calendar
+        uses: actions/checkout@v4
       - name: Deliver external school trigger
         env:
           USER_TOKEN: ${{ secrets.GH_PAT }}
@@ -58,6 +60,49 @@ jobs:
           else
             echo "ERROR: Unsupported event: $EVENT_NAME"
             exit 1
+          fi
+
+          # The Master Index governs school-day decisions; this mirrored calendar
+          # suppresses scheduled Work events on parent-declared no-school dates.
+          # A manual workflow_dispatch remains available for explicitly requested work.
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            breaks_file=".github/moran-school-breaks.json"
+            if ! jq -e '
+              .version == 1 and
+              .time_zone == "America/Chicago" and
+              (.no_school_ranges | type == "array") and
+              all(.no_school_ranges[];
+                ((.start_date | type) == "string") and
+                ((.end_date | type) == "string") and
+                (.start_date <= .end_date)
+              )
+            ' "$breaks_file" >/dev/null; then
+              echo "ERROR: School break calendar missing or invalid; not posting a Work trigger."
+              exit 1
+            fi
+
+            is_no_school() {
+              jq -e --arg school_date "$1" '
+                any(.no_school_ranges[];
+                  (.start_date <= $school_date) and
+                  ($school_date <= .end_date)
+                )
+              ' "$breaks_file" >/dev/null
+            }
+
+            if is_no_school "$local_date"; then
+              if [ "$phase" = "PRIMARY" ]; then
+                echo "No school on $local_date; skipping hourly Work trigger."
+                exit 0
+              fi
+
+              tomorrow="$(date -u -d "$local_date + 1 day" +'%Y-%m-%d')"
+              if is_no_school "$tomorrow"; then
+                echo "School break continues on $tomorrow; skipping nightly Work trigger."
+                exit 0
+              fi
+              echo "School resumes $tomorrow; allowing nightly preparation trigger."
+            fi
           fi
 
           if [ -n "$USER_TOKEN" ]; then
