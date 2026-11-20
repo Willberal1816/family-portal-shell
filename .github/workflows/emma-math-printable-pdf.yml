@@ -97,6 +97,41 @@ jobs:
               print(f'{stem}: four nonblank pages and repeated Tracking verified')
           PY
 
+
+      - name: Render and verify ten Friday November 20 printable PDFs
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser="$(command -v google-chrome || command -v chromium || true)"
+          if [ -z "$browser" ]; then echo "Chrome/Chromium unavailable" >&2; exit 1; fi
+          for stem in emma-math-festival-kits-51 natalie-math-trail-measure-51 emma-la-garden-record-51 natalie-la-shuttle-survey-51 emma-reading-middle-event-51 natalie-reading-key-word-51 emma-health-comfort-breaks-51 natalie-health-focus-log-51 emma-cooking-wraps-measure-51 natalie-cooking-wraps-measure-51; do
+            "$browser" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$GITHUB_WORKSPACE/worksheets/curriculum/print-pdf/$stem.pdf" "file://$GITHUB_WORKSPACE/worksheets/curriculum/lessons/$stem.html"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          from pypdf import PdfReader
+          stems=["emma-math-festival-kits-51","natalie-math-trail-measure-51","emma-la-garden-record-51","natalie-la-shuttle-survey-51","emma-reading-middle-event-51","natalie-reading-key-word-51","emma-health-comfort-breaks-51","natalie-health-focus-log-51","emma-cooking-wraps-measure-51","natalie-cooking-wraps-measure-51"]
+          for stem in stems:
+              html=Path('worksheets/curriculum/lessons/'+stem+'.html').read_text(encoding='utf-8')
+              ids=set(re.findall(r'2026-11-20-(?:EMM|NAT)-[A-Z0-9-]+',html))
+              if len(ids)!=1: raise SystemExit(f'{stem}: expected one Tracking ID, got {ids}')
+              track=next(iter(ids))
+              if 'id="screen-work"' not in html: raise SystemExit(f'{stem}: screen work container missing')
+              for n in range(1,7):
+                  if f'Question {n}.' not in html: raise SystemExit(f'{stem}: missing visible Q{n}')
+              pdf=PdfReader('worksheets/curriculum/print-pdf/'+stem+'.pdf')
+              if len(pdf.pages)!=4: raise SystemExit(f'{stem}: expected 4 physical pages, got {len(pdf.pages)}')
+              complete=''
+              for i,page in enumerate(pdf.pages,1):
+                  t=page.extract_text() or ''
+                  complete+=t
+                  if track not in t or len(t.strip())<140: raise SystemExit(f'{stem}: blank/missing Tracking on page {i}')
+              for n in range(1,7):
+                  if f'Question {n}.' not in complete: raise SystemExit(f'{stem}: printable missing Q{n}')
+              print(stem+': valid four-page printable, repeated Tracking and all six visible questions')
+          PY
+
       - name: Commit validated same-site PDFs
         shell: bash
         run: |
