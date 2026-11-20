@@ -82,7 +82,7 @@ jobs:
           stems=["natalie-math-customary-length-50","natalie-la-west-gate-survey-50","natalie-read-word-choices-50","natalie-sci-fahrenheit-cooling-50","natalie-social-ferry-sources-50"]
           for stem in stems:
               html=Path(f'worksheets/curriculum/lessons/{stem}.html').read_text(encoding='utf-8')
-              ids=set(re.findall(r'2026-\\d{2}-\\d{2}-NAT-[A-Z0-9-]+', html))
+              ids=set(re.findall(r'2026-\d{2}-\d{2}-NAT-[A-Z0-9-]+', html))
               if len(ids)!=1:
                   raise SystemExit(f'{stem}: expected one Tracking ID; got {ids}')
               track=next(iter(ids))
