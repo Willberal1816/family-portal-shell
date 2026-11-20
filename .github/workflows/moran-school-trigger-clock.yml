@@ -3,10 +3,11 @@ name: Moran School Trigger Clock
 on:
   workflow_dispatch:
   schedule:
-    # GitHub cron is UTC. Run every 10 minutes at :07/:17/... all day,
-    # then decide the real school phase from America/Chicago inside the job.
-    # This avoids timezone-registration drift and remains correct across DST.
-    - cron: '7,17,27,37,47,57 * * * *'
+    # UTC-neutral hourly opportunities; local Chicago time gates actual delivery.
+    # :07 hourly for noon-9 PM Central; :15 UTC 02/03 for 9:15 PM closeout.
+    # Covers both daylight and standard time without timezone cron syntax.
+    - cron: '7 * * * *'
+    - cron: '15 2,3 * * *'
 
 permissions:
   contents: read
@@ -23,6 +24,7 @@ jobs:
           DEFAULT_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
           RUN_ID: ${{ github.run_id }}
         shell: bash
         run: |
@@ -33,18 +35,26 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             phase="PRIMARY"
           elif [ "$EVENT_NAME" = "schedule" ]; then
-            case "$local_hour" in
-              07|08|09|10|11|12|13|14|15|16|17|18|19|20)
-                phase="PRIMARY"
-                ;;
-              21)
-                phase="NIGHTLY_CLOSEOUT_PREFLIGHT"
-                ;;
-              *)
-                echo "Outside Moran School local execution window: $local_hour:$local_minute America/Chicago"
+            if [ "$EVENT_SCHEDULE" = '7 * * * *' ]; then
+              case "$local_hour" in
+                12|13|14|15|16|17|18|19|20|21)
+                  phase="PRIMARY"
+                  ;;
+                *)
+                  echo "Outside hourly school review window: $local_hour:$local_minute America/Chicago"
+                  exit 0
+                  ;;
+              esac
+            elif [ "$EVENT_SCHEDULE" = '15 2,3 * * *' ]; then
+              if [ "$local_hour" != 21 ]; then
+                echo "Outside nightly closeout window: $local_hour:$local_minute America/Chicago"
                 exit 0
-                ;;
-            esac
+              fi
+              phase="NIGHTLY_CLOSEOUT_PREFLIGHT"
+            else
+              echo "ERROR: Unexpected GitHub schedule: $EVENT_SCHEDULE"
+              exit 1
+            fi
           else
             echo "ERROR: Unsupported event: $EVENT_NAME"
             exit 1
