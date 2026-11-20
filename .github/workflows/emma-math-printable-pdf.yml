@@ -65,13 +65,45 @@ jobs:
               print(f'{stem}: verified 2 complete pages with {expected} on each.')
           PY
 
+
+      - name: Render and validate five matching Natalie November 18 PDFs
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser="$(command -v google-chrome || command -v chromium || true)"
+          if [ -z "$browser" ]; then echo "Missing Chrome/Chromium" >&2; exit 1; fi
+          for stem in natalie-math-customary-length-50 natalie-la-west-gate-survey-50 natalie-read-word-choices-50 natalie-sci-fahrenheit-cooling-50 natalie-social-ferry-sources-50; do
+            "$browser" --headless --no-sandbox --disable-gpu --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$GITHUB_WORKSPACE/worksheets/curriculum/print-pdf/$stem.pdf" "file://$GITHUB_WORKSPACE/worksheets/curriculum/lessons/$stem.html"
+          done
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          from pypdf import PdfReader
+          stems=["natalie-math-customary-length-50","natalie-la-west-gate-survey-50","natalie-read-word-choices-50","natalie-sci-fahrenheit-cooling-50","natalie-social-ferry-sources-50"]
+          for stem in stems:
+              html=Path(f'worksheets/curriculum/lessons/{stem}.html').read_text(encoding='utf-8')
+              ids=set(re.findall(r'2026-\\d{2}-\\d{2}-NAT-[A-Z0-9-]+', html))
+              if len(ids)!=1:
+                  raise SystemExit(f'{stem}: expected one Tracking ID; got {ids}')
+              track=next(iter(ids))
+              pdf=Path(f'worksheets/curriculum/print-pdf/{stem}.pdf')
+              pages=PdfReader(str(pdf)).pages
+              if len(pages)!=4:
+                  raise SystemExit(f'{stem}: expected four pages, got {len(pages)}')
+              for j, page in enumerate(pages,1):
+                  value=page.extract_text() or ''
+                  if track not in value or len(value.strip())<80:
+                      raise SystemExit(f'{stem}: missing Tracking or empty page {j}')
+              print(f'{stem}: four nonblank pages and repeated Tracking verified')
+          PY
+
       - name: Commit validated same-site PDFs
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add worksheets/curriculum/print-pdf/emma-*.pdf
+          git add worksheets/curriculum/print-pdf/emma-*.pdf worksheets/curriculum/print-pdf/natalie-*.pdf
           if git diff --cached --quiet; then
             echo "All Emma PDFs are current."
             exit 0
