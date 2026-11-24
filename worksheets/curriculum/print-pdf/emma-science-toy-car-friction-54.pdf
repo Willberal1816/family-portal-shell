@@ -1,203 +1,131 @@
 %PDF-1.4
+%“Œ‹ž ReportLab Generated PDF document (opensource)
 1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
+<<
+/F1 2 0 R /F2 3 0 R
+>>
 endobj
 2 0 obj
-<< /Type /Pages /Count 4 /Kids [3 0 R 5 0 R 7 0 R 9 0 R] >>
+<<
+/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+>>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R /F2 12 0 R >> >> /Contents 4 0 R >>
+<<
+/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+>>
 endobj
 4 0 obj
-<< /Length 1925 >>
-stream
-BT /F2 13 Tf 1 0 0 1 42 760 Tm (Science: A Fair Friction Comparison) Tj ET
-BT /F1 9 Tf 1 0 0 1 42 742 Tm (Emma | Science | Wednesday, November 25, 2026 | Page 1/4) Tj ET
-BT /F2 10 Tf 1 0 0 1 42 724 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54) Tj ET
-0.5 w 42 716 m 570 716 l S
-BT /F2 9 Tf 1 0 0 1 43 695 Tm (SOURCE AND FACTS) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 679 Tm (FICTIONAL TOY-CAR TEST; DISTANCES IN INCHES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 667 Tm (Same car, same ramp and release position.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 655 Tm (Cardboard: 28, 30, 32 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 643 Tm (Low-pile carpet: 16, 18, 20 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 631 Tm (Three trials per surface; no speed measurements.) Tj ET
-BT /F2 9 Tf 1 0 0 1 43 611 Tm (WORKED EXAMPLES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 596 Tm (Cardboard trials 28, 30 and 32 inches have mean 30 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 584 Tm (Carpet trials 16, 18 and 20 inches have mean 18 inches, so their mean differs by 12 inches.) Tj ET
-BT /F2 10 Tf 1 0 0 1 43 505 Tm (Question 1.) Tj ET
-BT /F1 9 Tf 1 0 0 1 43 488 Tm (Name the variable changed, outcome measured and three controls kept constant.) Tj ET
-0.5 w 50 456 m 563 456 l S
-0.5 w 50 438 m 563 438 l S
-0.5 w 50 420 m 563 420 l S
-0.5 w 50 402 m 563 402 l S
-0.5 w 50 384 m 563 384 l S
-0.5 w 50 366 m 563 366 l S
-0.5 w 50 348 m 563 348 l S
-0.5 w 50 330 m 563 330 l S
-BT /F2 10 Tf 1 0 0 1 43 279 Tm (Question 2.) Tj ET
-BT /F1 9 Tf 1 0 0 1 43 262 Tm (Create a six-row data table with surface, trial and travel distance in inches.) Tj ET
-0.5 w 50 230 m 563 230 l S
-0.5 w 50 212 m 563 212 l S
-0.5 w 50 194 m 563 194 l S
-0.5 w 50 176 m 563 176 l S
-0.5 w 50 158 m 563 158 l S
-0.5 w 50 140 m 563 140 l S
-0.5 w 50 122 m 563 122 l S
-0.5 w 50 104 m 563 104 l S
-0.5 w 42 40 m 570 40 l S
-BT /F1 8 Tf 1 0 0 1 42 24 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54 | Page 1 of 4 | Scan all pages) Tj ET
-endstream
+<<
+/Contents 11 0 R /MediaBox [ 0 0 612 792 ] /Parent 10 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 5 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R /F2 12 0 R >> >> /Contents 6 0 R >>
+<<
+/Contents 12 0 R /MediaBox [ 0 0 612 792 ] /Parent 10 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 6 0 obj
-<< /Length 1924 >>
-stream
-BT /F2 13 Tf 1 0 0 1 42 760 Tm (Science: A Fair Friction Comparison) Tj ET
-BT /F1 9 Tf 1 0 0 1 42 742 Tm (Emma | Science | Wednesday, November 25, 2026 | Page 2/4) Tj ET
-BT /F2 10 Tf 1 0 0 1 42 724 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54) Tj ET
-0.5 w 42 716 m 570 716 l S
-BT /F2 9 Tf 1 0 0 1 43 695 Tm (SOURCE AND FACTS) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 679 Tm (FICTIONAL TOY-CAR TEST; DISTANCES IN INCHES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 667 Tm (Same car, same ramp and release position.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 655 Tm (Cardboard: 28, 30, 32 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 643 Tm (Low-pile carpet: 16, 18, 20 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 631 Tm (Three trials per surface; no speed measurements.) Tj ET
-BT /F2 9 Tf 1 0 0 1 43 611 Tm (WORKED EXAMPLES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 596 Tm (Cardboard trials 28, 30 and 32 inches have mean 30 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 584 Tm (Carpet trials 16, 18 and 20 inches have mean 18 inches, so their mean differs by 12 inches.) Tj ET
-BT /F2 10 Tf 1 0 0 1 43 505 Tm (Question 3.) Tj ET
-BT /F1 9 Tf 1 0 0 1 43 488 Tm (Calculate mean distance for each surface and their difference with equations.) Tj ET
-0.5 w 50 456 m 563 456 l S
-0.5 w 50 438 m 563 438 l S
-0.5 w 50 420 m 563 420 l S
-0.5 w 50 402 m 563 402 l S
-0.5 w 50 384 m 563 384 l S
-0.5 w 50 366 m 563 366 l S
-0.5 w 50 348 m 563 348 l S
-0.5 w 50 330 m 563 330 l S
-BT /F2 10 Tf 1 0 0 1 43 279 Tm (Question 4.) Tj ET
-BT /F1 9 Tf 1 0 0 1 43 262 Tm (Draw a two-bar chart of means with an axis starting at zero and proper units.) Tj ET
-0.5 w 50 230 m 563 230 l S
-0.5 w 50 212 m 563 212 l S
-0.5 w 50 194 m 563 194 l S
-0.5 w 50 176 m 563 176 l S
-0.5 w 50 158 m 563 158 l S
-0.5 w 50 140 m 563 140 l S
-0.5 w 50 122 m 563 122 l S
-0.5 w 50 104 m 563 104 l S
-0.5 w 42 40 m 570 40 l S
-BT /F1 8 Tf 1 0 0 1 42 24 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54 | Page 2 of 4 | Scan all pages) Tj ET
-endstream
+<<
+/Contents 13 0 R /MediaBox [ 0 0 612 792 ] /Parent 10 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 7 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R /F2 12 0 R >> >> /Contents 8 0 R >>
+<<
+/Contents 14 0 R /MediaBox [ 0 0 612 792 ] /Parent 10 0 R /Resources <<
+/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>> /Rotate 0 /Trans <<
+
+>> 
+  /Type /Page
+>>
 endobj
 8 0 obj
-<< /Length 1781 >>
-stream
-BT /F2 13 Tf 1 0 0 1 42 760 Tm (Science: A Fair Friction Comparison) Tj ET
-BT /F1 9 Tf 1 0 0 1 42 742 Tm (Emma | Science | Wednesday, November 25, 2026 | Page 3/4) Tj ET
-BT /F2 10 Tf 1 0 0 1 42 724 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54) Tj ET
-0.5 w 42 716 m 570 716 l S
-BT /F2 9 Tf 1 0 0 1 43 695 Tm (SOURCE AND FACTS) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 679 Tm (FICTIONAL TOY-CAR TEST; DISTANCES IN INCHES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 667 Tm (Same car, same ramp and release position.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 655 Tm (Cardboard: 28, 30, 32 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 643 Tm (Low-pile carpet: 16, 18, 20 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 631 Tm (Three trials per surface; no speed measurements.) Tj ET
-BT /F2 9 Tf 1 0 0 1 43 611 Tm (WORKED EXAMPLES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 596 Tm (Cardboard trials 28, 30 and 32 inches have mean 30 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 584 Tm (Carpet trials 16, 18 and 20 inches have mean 18 inches, so their mean differs by 12 inches.) Tj ET
-BT /F2 10 Tf 1 0 0 1 43 505 Tm (Question 5.) Tj ET
-BT /F1 9 Tf 1 0 0 1 43 488 Tm (Explain why these six trials cannot prove the result is true for ALL cars.) Tj ET
-0.5 w 50 456 m 563 456 l S
-0.5 w 50 438 m 563 438 l S
-0.5 w 50 420 m 563 420 l S
-0.5 w 50 402 m 563 402 l S
-0.5 w 50 384 m 563 384 l S
-0.5 w 50 366 m 563 366 l S
-0.5 w 50 348 m 563 348 l S
-0.5 w 50 330 m 563 330 l S
-0.5 w 50 312 m 563 312 l S
-0.5 w 50 294 m 563 294 l S
-0.5 w 50 276 m 563 276 l S
-0.5 w 50 258 m 563 258 l S
-0.5 w 50 240 m 563 240 l S
-0.5 w 50 222 m 563 222 l S
-0.5 w 50 204 m 563 204 l S
-0.5 w 50 186 m 563 186 l S
-0.5 w 50 168 m 563 168 l S
-0.5 w 42 40 m 570 40 l S
-BT /F1 8 Tf 1 0 0 1 42 24 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54 | Page 3 of 4 | Scan all pages) Tj ET
-endstream
+<<
+/PageMode /UseNone /Pages 10 0 R /Type /Catalog
+>>
 endobj
 9 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 11 0 R /F2 12 0 R >> >> /Contents 10 0 R >>
+<<
+/Author (anonymous) /CreationDate (D:20261124233612+00'00') /Creator (anonymous) /Keywords () /ModDate (D:20261124233612+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
+  /Subject (2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54) /Title (Science: A Fair Friction Comparison) /Trapped /False
+>>
 endobj
 10 0 obj
-<< /Length 1799 >>
-stream
-BT /F2 13 Tf 1 0 0 1 42 760 Tm (Science: A Fair Friction Comparison) Tj ET
-BT /F1 9 Tf 1 0 0 1 42 742 Tm (Emma | Science | Wednesday, November 25, 2026 | Page 4/4) Tj ET
-BT /F2 10 Tf 1 0 0 1 42 724 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54) Tj ET
-0.5 w 42 716 m 570 716 l S
-BT /F2 9 Tf 1 0 0 1 43 695 Tm (SOURCE AND FACTS) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 679 Tm (FICTIONAL TOY-CAR TEST; DISTANCES IN INCHES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 667 Tm (Same car, same ramp and release position.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 655 Tm (Cardboard: 28, 30, 32 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 643 Tm (Low-pile carpet: 16, 18, 20 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 631 Tm (Three trials per surface; no speed measurements.) Tj ET
-BT /F2 9 Tf 1 0 0 1 43 611 Tm (WORKED EXAMPLES) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 596 Tm (Cardboard trials 28, 30 and 32 inches have mean 30 inches.) Tj ET
-BT /F1 8 Tf 1 0 0 1 44 584 Tm (Carpet trials 16, 18 and 20 inches have mean 18 inches, so their mean differs by 12 inches.) Tj ET
-BT /F2 10 Tf 1 0 0 1 43 505 Tm (Question 6.) Tj ET
-BT /F1 9 Tf 1 0 0 1 43 488 Tm (Design a safe four-step fair-test repeat with measurement plan, controls and cautious claim.) Tj ET
-0.5 w 50 456 m 563 456 l S
-0.5 w 50 438 m 563 438 l S
-0.5 w 50 420 m 563 420 l S
-0.5 w 50 402 m 563 402 l S
-0.5 w 50 384 m 563 384 l S
-0.5 w 50 366 m 563 366 l S
-0.5 w 50 348 m 563 348 l S
-0.5 w 50 330 m 563 330 l S
-0.5 w 50 312 m 563 312 l S
-0.5 w 50 294 m 563 294 l S
-0.5 w 50 276 m 563 276 l S
-0.5 w 50 258 m 563 258 l S
-0.5 w 50 240 m 563 240 l S
-0.5 w 50 222 m 563 222 l S
-0.5 w 50 204 m 563 204 l S
-0.5 w 50 186 m 563 186 l S
-0.5 w 50 168 m 563 168 l S
-0.5 w 42 40 m 570 40 l S
-BT /F1 8 Tf 1 0 0 1 42 24 Tm (Tracking #: 2026-11-25-EMM-SCI-TOY-CAR-FRICTION-54 | Page 4 of 4 | Scan all pages) Tj ET
-endstream
+<<
+/Count 4 /Kids [ 4 0 R 5 0 R 6 0 R 7 0 R ] /Type /Pages
+>>
 endobj
 11 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 1076
+>>
+stream
+Gatn%?#SIU'Sc)T.h8eQCp5`:P59-DQ$IOc+Ec:<5d<sOAn!>-V+Pda!<)FLUh#c?=sInH:ZAe,k<0nJ-:1+E[')n%n4*u'0+j:3IKq8f!VnT(nqkm7?t/e3a@8=OdS+V5O=+2J;@#^]AP>@9Dgm;umQ?4\k)`Y`Ypi;A$ZubWY`r],bI/tuZIU_5X%'O/=6j3:rtk7`m.Mi>&VH0R9`*:c.UjAV[lu&&LOF1,,O&p(MlMs0)+HB`hQ*bZh,Z^7@9n@^eZES;`D^.V9BbENjh7B/l8oQKPu@n4&m8b%Gq4f.;W#AFQZggX0jo"*Gk397bZ@+0p7G`AFV?<E<qC_3FreLb-qqjE;OOhY+AeFP,)m5FGs0Oj65D&,e'tPoYaKm+GTN#!V+Qno/pHO%cAZ1qb*e4s9jALX_:R3pN)h*/D":ZskA$2fXlkTOXOd$2s0^L(`o#2BWKe0)Ch4hA"bgcjd$[laWs5BV6EBfPFpa\L.o$%sB8sk"MiGql]=k?2Kh@e.JOf?C;!MMf](9l)HSPH04pF`l\!^o/In:I9'JM<pq^`,6^XtleCR'Lc/`j^!L9?p3d,)l2]`MJ,f-n%\MCNX[<MaeehG692R<gQ&Ka_s:khSOIG&lMd<q8V_@hQeZn1c\6"#TJ">alMqG7&(ZV:\@f:Jk%'qO790lA**PkrWB%[Stq]]hR>P]ac)_dmI!uY*Z^1@I^>Mb>Q5tpB[#;HJ"R=a!mqpZZ0>:RbGZa53s`GnmV%8;[VHUmq@l5SHKiQ'^1LqLRB5@TejVDM9Qm2BTBt]M.nFMZc&rh//`!dAF@Y)AFsCe43;+-78BDDqQ`Hq+"81-pdjA*_FJX%j?A_g,kmGV+o-qAdNKT5pj_u^455fQe:3.j^Y=_=<ln[!KWb4e[.P$>ZBrq]>8e0qZJV3*d-5MsJj.gO3noaur2B=n/PQc(?Quo8\#7<RRYYNa9WqU0XL#jeM(]5a$X[L@B"f6F3V$^&8G&&.OQ[q:+jifS6_]W0LI<6KLd'2U7bi5>)<PNFAuASU1J2M9NIUNknFY(:cT4tQ1tb5`Ep"/P-N=,HG?_H~>endstream
 endobj
 12 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 977
+>>
+stream
+GatUrD/\,^&BE]".8JTTFVDl;G+NASFUU/R9%O\ig.N)QnX?@%d&PMXr6>LO=-HH^#YD*jnF(ki]/']n*GDU$$1Ks-:LaN<OKALM5D3h[UTA+p$nsU5J^=%55=j4a,PXArA!VWe7VU"3B^bRhE'HFF+Gi'g-(N5$-*(:B_^17qC15ntI&#s6L3;1*<crQX!O?'oI5KD_3!^Ar$mV45mR\8SIWD2>0RDBX8f('s7ZPVh^`V3mC%ObF/(lMn;]fWEK.IhE"W$c^"Y?Okho2,h#5&<i8'2tV7u8cN`2j^L]rLMYh78s'6hFLANNTFsq/G>)f0?t-jfLJUSIDjHour>!O<<d!Ked(hO?e7-LIi&pmFPZU+=*Y6-qVX]J9gU-cd<<%$*>K+Nl;LqZ84(7LN6f#6LECXGc0kJ$@Ab6NTSmtI$r3bbLphkLWPLh_f)<\,Q*:VQVnGY=it!6&ouCnU!oc;PRWF`$*>bSkTi!-Vf_q57tj@Ya[1`V>qTm'd#t8ShuTAW<0aXuG9"m5-c;kTUXuH]7&#g5F"5*l@&d0!<>$-5=[KQ7V1_RD7+":f("7$SQ,r%j<&JcWPY3E=7CK<LA[OP$-Q9X/4d_?uK")D7Z^%*G*;hcHr\*.`p7m9;)!J4/lFX2,7@>Ml^-4OV^=,hYYZ0FJ:ii<]?.Y.Kni(>U09mkcQg-kZ3_."[TH>c9C*d(uI\L2C--YhOY2jK7`RDZ"ZZ98d<)]`#Qo'St=NCP3;8BV<s2LJ<#5L3NY+aSS2<GT-M'Lh>aGIrC$]1f"mokMgkn^Q\F)0p@)6FbsF#Z.Hp#t)!=EEJj/M_F1Tga\g1:5-L7<4=I/s9EaGELZ)\VoMaa^$1$8F@[i75>\$/<[P7As(;+15fZqP$'&OO_Bm@,1.U^7A<5FMaWIk(Proa0%(A<T]PQ\q`T/T'EUK^quq=6?(''PEGKs4,Fa[_.RY(<6fu\9J*?h75L^5M~>endstream
+endobj
+13 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 1375
+>>
+stream
+GatUsgN)%,&;KZP'Kab_VdhI"M$N4d<TM^eNmh+#an-4/@%/`D"fWolo\mC^B`b(X)TT9;Bo.=nrG^\(8KbqfZ(Kb`i3s-O?4n@pZ9'0ki/h6^.Qap&'M)chdsqqq5o:u>&I;L'6o9XKM^4u9oY(&,)1#os@_j0;iH2cX<OGiiDul:\f5R_\D3rih/F0U(3cF?L%:jrUp8dSPn2-pP:a3,nr/S<16g'akZoli8qB>BG6E\I/_LF7-7dID7<N=lsDeF#fIo5;sBqXGoBLjA4s-36b(t<cF4d<u)3#[p62I`QFp7K"/LL8>DV[Gg,<%M&l4tP:.X$uaPYJp(lG&_eS[EPd;hCO=%.#?(h:1[*tNe)dAic,gOmI)Ef%>"j3LcDhD!UGr!:HX@[M/aiHmF^3VES7;l2H-$tE=k"0e'"?KiYi##aB%Wn*PB-jB,<MMeJbT.n:18SC@-S%_UfJJ-EfmAb>Q/Wl8*+5V.J>1XEL7:Tk(3sWS?4pTAV,R&?c:@9"j!/pjl),S,j#f9d-^K&#qc6S>ED!IU+$29jZJ?BN0292rY^:`,++>+].lIK^:uT"eEqMd6`J09Y8o#Ei\%_<C>Lh[=])nA?T"4WpVj-87/YDe=n&sZTt/VWjS7I+-..,_,!L0O/"'Grm8Y@h\bmsQ3WMu*U:U5C=k^@h3g+I4Xecm`a?-XDp=hkg?s*t$Xhd.2fnpdkq:l9!a>Lu+?TA$FD\L.+ZHF*:AZMj3dX.J+Icob0K5A0bD"%ER%b+Y(_QtL"@5[jMT?4[jG""si?Vo/2!SdsVK#Dl1G/1)BVp&'AB$r!(-5s!*XeOD:lg=U=K'8,B.VPBTedJHZ*5)Ro2sY(Km>4c`kjhR2Ig/:$_+D?O+kn^\AuI!/DOao1D]D`n/2W.=SRhDGV!=D,!6Vq@klqEge7RmG*66.ZF5ske4J57;BhWAm8;jd)5Z25&oec%m3LgJHJ;$H@J%!l,)=S#:.dX-A;ZLq)!M/j&;SZf:8/5n\"1GX7W04P9<KsC+:t4q^$sc'3En(o42@pP`I+AEq*BrW"02f'.4J:6VS'\G/g2L#qMZV77`!m%_LVlKNSY_bZG=)o8\OMeaHN?t`'%h)j%6t^KEbC$0<#q?F?kYW#6a1fT+4E9[f=`0nQG%GK"AhJ\urIFSd3?`m[L*)*M/F`D^Nf>j&p-F^ND/>?@pt^q[R.6R%qBL=q>7]pE9?#A1'Hq>#j)n1`FQhEH%hVY7:2&_85oHYFUumpS$F[(fs"W4fR8$_rWm_J],GWontb8N_<$`e3Q3:?rI=(`.:T&aP7rH%9Nu3%cc[7&5O<UhdLb=kY%?u80/j\T!@-a=,Ie0p=&12q\UM-]=n_4\)(#uao>PY)&*~>endstream
+endobj
+14 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ] /Length 987
+>>
+stream
+GatUr997OU&BF8<'I.U#:_PUmoB>UV.4nNQG9\8k-?ZeK]PpcKQ2'j-h:<DQ($mhQi_5X5rF\56(EoLTmBrknhW=6MNdqQ/24t3YjB"%Y8(Prc'5O4nlsL@!1_UiPj@PZA'LECE)&&Ybbq"&.c=9CT%XALrbG%s1U!DU0k-EJjf4?\$D$/7qm\DK4[Wr>X=309$pF%@#K90M8rop#3(_=oocH,9Z^K(,$3Xp+1f+NPLJP;h7C=T83-(i1re,E2:(Su]%@pfmAkiY&'W'EV[#2r-6B&Fqs7@'<V=aV`h7sK/oSHalNMhB^UFg.AgK)G=`0YMi>jq!Aa^::i_@NQ:2k!Q+AfgHB"9G<OX#s<SP2&8LkC5C?gN[e.k^5kAc8X@duP3l6:cqQSXJk[^B2D-h+S^$o?0!F1U(%U$5^OZ':AU\n\SLn8i6f7.Kg!UO_:WK)*;LGa6V5tCG;NIM1,;&3kA?u?>.OBEF?/(^CI_q:8iqUJZVGaV3Zuhujc,ROD3Z4/VYu1I631mi#Ib!k<Y,lFd3]3GV66$)>VI]]u!okr"ODhL(0^)D84`n&?qQ4)I6<uk*6Jj6"Jsp:^X&Z9jiO#2$nsoM`<XK/m<m^eGosSoeVch,k`K!M,+2c.?N"+.h$$fUo"sd4.>/@f+lC]4u8#=ie8TW=I!o7_S!6%DcO/a;>@$=Wuc(Nh64tAijd-7u8.seKY]kM][e8A\r<n/q#Z^!#_Q1:p=ASjSDeShL>-D9[.4nRkW%7MSdqX7*S&#!Yae3cnCTf/GbVFbTM$&,b@2jB\5o=gocO_H4j1O!I!S'dYO1Q0B&Cdu1aWACHdfcc'1'FlR>Ui8l`,Ip0^+3>Odqag.:gdcC?j?A_g,kmGF+dnC%%`s)DF%GF<R6r_OaW-K>89@DpOm%nj,LI[^8"rAFO$nak+6eSFd.%UU_[a=t&Q+o9rt,+G.^Q+"k!o10rbT&dZR2^[3\pG9rPRh85EZf3~>endstream
 endobj
 xref
-0 13
+0 15
 0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000133 00000 n 
-0000000271 00000 n 
-0000002247 00000 n 
-0000002385 00000 n 
-0000004360 00000 n 
-0000004498 00000 n 
-0000006330 00000 n 
-0000006469 00000 n 
-0000008320 00000 n 
-0000008391 00000 n 
+0000000061 00000 n 
+0000000102 00000 n 
+0000000209 00000 n 
+0000000321 00000 n 
+0000000516 00000 n 
+0000000711 00000 n 
+0000000906 00000 n 
+0000001101 00000 n 
+0000001170 00000 n 
+0000001485 00000 n 
+0000001563 00000 n 
+0000002731 00000 n 
+0000003799 00000 n 
+0000005266 00000 n 
 trailer
-<< /Root 1 0 R /Size 13 >>
+<<
+/ID 
+[<779ef5e3e1d762e585d9cdc7a0dc24be><779ef5e3e1d762e585d9cdc7a0dc24be>]
+% ReportLab generated PDF document -- digest (opensource)
+
+/Info 9 0 R
+/Root 8 0 R
+/Size 15
+>>
 startxref
-8467
+6344
 %%EOF
